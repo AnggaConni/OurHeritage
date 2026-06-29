@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Heritage Conserv-EWS | Cultural Sites & Museums</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2392400e'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-size='36'%3E🏛️%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Early Warning System for climate & environmental risk in Cultural Heritage & Museum conservation.">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body{font-family:'Plus Jakarta Sans',sans-serif;background-color:#f8fafc;}
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;}
+  ::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+  .loader-spinner{border:3px solid #f3f3f3;border-top:3px solid #b45309;border-radius:50%;width:26px;height:26px;animation:spin 1s linear infinite;}
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  .picking-mode{cursor:crosshair!important;}
+  .tab-active{color:#b45309;border-color:#b45309;}
+  .mtab-active{color:#b45309;background:#fffbeb;}
+  .fade-in{animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .leaflet-container{font-family:inherit;}
+</style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+
+<!-- NAVBAR -->
+<nav class="bg-slate-900 text-white px-3 py-2.5 shrink-0 flex justify-between items-center shadow-lg z-30 border-b border-amber-600/30">
+  <div class="flex items-center gap-2.5 pl-1">
+    <div class="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center"><i class="fa-solid fa-building-columns"></i></div>
+    <div>
+      <h1 class="font-bold text-sm tracking-wide leading-none">HERITAGE EWS</h1>
+      <p class="text-[10px] text-slate-400 mt-0.5">Cultural & Museum Conservation</p>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button onclick="openModal('modal-settings')" title="API Settings" class="bg-slate-700 hover:bg-slate-600 w-8 h-8 rounded-lg text-xs transition flex items-center justify-center"><i class="fa-solid fa-gear"></i></button>
+    <button onclick="loadSampleData()" class="bg-amber-700 hover:bg-amber-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2"><i class="fa-solid fa-bolt"></i><span class="hidden sm:inline">Sample Sites</span></button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+
+  <!-- MAP -->
+  <div id="map-container" class="w-full md:w-[38%] lg:w-1/3 flex flex-col border-r border-slate-200 bg-white shrink-0 relative h-full">
+    <div class="p-3 bg-slate-50 border-b flex justify-between items-center z-20 shrink-0">
+      <h2 class="font-bold text-sm text-slate-700"><i class="fa-solid fa-map-location-dot mr-1 text-amber-600"></i> Heritage Map</h2>
+      <button onclick="openModal('modal-add-site')" class="text-xs bg-slate-800 text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-700 shadow flex items-center gap-1"><i class="fa-solid fa-plus"></i> Add Site</button>
+    </div>
+    <div id="map-wrapper" class="flex-1 relative p-2">
+      <div id="map" class="shadow-inner border border-slate-200 w-full h-full rounded-lg relative z-10"></div>
+      <div id="map-picker-instruction" class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold shadow-2xl z-[1000] hidden items-center gap-3 border border-amber-500 w-max">
+        <span class="flex items-center gap-2"><i class="fa-solid fa-hand-pointer text-amber-400 animate-bounce"></i> Click a location on the map</span>
+        <button type="button" onclick="cancelMapPick()" class="bg-slate-700 hover:bg-slate-600 rounded-full w-6 h-6 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash-panel" class="w-full md:w-[62%] lg:w-2/3 flex-1 md:h-full overflow-y-auto bg-slate-50 relative hidden md:block">
+
+    <div id="welcome-state" class="h-full flex flex-col items-center justify-center p-8 text-center">
+      <i class="fa-solid fa-monument text-7xl text-slate-300 mb-4"></i>
+      <h2 class="text-xl font-bold text-slate-700 mb-2">Select a Cultural Site / Museum</h2>
+      <p class="text-sm text-slate-500 max-w-md">Tap a pin on the map to analyse artifact risk based on environment, air quality, seismicity, flood & material vulnerability.</p>
+      <button onclick="loadSampleData()" class="mt-5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center gap-2"><i class="fa-solid fa-bolt"></i> Load Sample Sites</button>
+    </div>
+
+    <div id="dashboard-content" class="hidden">
+      <!-- Header -->
+      <div class="bg-white border-b border-slate-200 px-4 md:px-6 pt-4 pb-0 sticky top-0 z-20">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 mb-3">
+          <div>
+            <span id="d-type" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-200">Museum</span>
+            <h2 id="d-name" class="font-extrabold text-2xl text-slate-800 tracking-tight mt-1">Borobudur Temple</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Material: <strong id="d-material" class="text-slate-700">Stone</strong> · <span id="d-coord"></span></p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openModal('modal-capacity')" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Capacity</button>
+            <button onclick="processSiteData(currentSiteId)" class="bg-slate-800 text-white hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-semibold shadow flex items-center gap-2"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+          </div>
+        </div>
+        <!-- Sub Tabs -->
+        <div class="flex gap-1 overflow-x-auto text-xs font-semibold -mb-px">
+          <button data-tab="overview" onclick="switchTab('overview')" class="dtab tab-active px-3 py-2.5 border-b-2 whitespace-nowrap">Overview</button>
+          <button data-tab="indicators" onclick="switchTab('indicators')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">Indicators</button>
+          <button data-tab="destana" onclick="switchTab('destana')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">DESTANA</button>
+          <button data-tab="forecast" onclick="switchTab('forecast')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">Forecast</button>
+          <button data-tab="actions" onclick="switchTab('actions')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">Actions</button>
+        </div>
+      </div>
+
+      <div class="p-4 md:p-6 pb-24">
+        <!-- OVERVIEW -->
+        <div id="tab-overview" class="tabpane fade-in">
+          <div id="ibf-alert" class="mb-5 rounded-xl border p-4 shadow-sm flex gap-3 items-start"></div>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-5">
+            <div class="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col items-center text-center">
+              <h3 class="text-[11px] font-bold text-slate-400 uppercase mb-3">Artifact Risk Score</h3>
+              <div id="risk-gauge" class="relative w-36 h-36 rounded-full flex items-center justify-center mb-3" style="background:conic-gradient(#e2e8f0 0deg,#e2e8f0 360deg)">
+                <div class="absolute inset-[10px] bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                  <span id="risk-score" class="text-3xl font-black text-slate-700">0%</span>
+                  <span id="risk-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 border">—</span>
+                </div>
+              </div>
+              <p class="text-[10px] text-slate-500 leading-tight max-w-[90%]">DESTANA Matrix: Hazard × Vulnerability ÷ Capacity</p>
+            </div>
+            <div class="md:col-span-3 grid grid-cols-2 gap-3">
+              <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 block"><i class="fa-solid fa-droplet text-sky-400"></i> Humidity / Temp</span>
+                <div class="flex items-end gap-1.5 mt-1"><span id="ov-rh" class="text-xl font-bold text-sky-600">—</span><span class="text-slate-300">/</span><span id="ov-temp" class="text-xl font-bold text-slate-700">—</span></div>
+                <span class="text-[9px] text-slate-400 block mt-0.5">Open-Meteo</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 block"><i class="fa-solid fa-smog text-slate-400"></i> PM2.5</span>
+                <div class="flex items-end gap-1 mt-1"><span id="ov-pm25" class="text-xl font-bold text-slate-700">—</span><span class="text-[10px] text-slate-400 mb-1">µg/m³</span></div>
+                <span id="ov-pm25-badge" class="text-[9px] px-1.5 py-0.5 rounded inline-block mt-0.5 bg-slate-100 text-slate-500">—</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 block"><i class="fa-solid fa-wave-square text-indigo-400"></i> Earthquake (100km)</span>
+                <div class="flex items-end gap-1 mt-1"><span id="ov-eq" class="text-xl font-bold text-slate-700">—</span></div>
+                <span class="text-[9px] text-slate-400 block mt-0.5">USGS</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                <span class="text-[10px] font-bold text-slate-400 block"><i class="fa-solid fa-water text-cyan-500"></i> Flood Risk</span>
+                <div class="flex items-end gap-1 mt-1"><span id="ov-flood" class="text-base font-bold text-slate-700">—</span></div>
+                <span class="text-[9px] text-slate-400 block mt-0.5">GloFAS / Open-Meteo</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <h3 class="text-[11px] font-bold text-slate-500 uppercase mb-3">7-Day Environment (RH % & Temp °C)</h3>
+            <div class="h-48 w-full"><canvas id="envChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- INDICATORS -->
+        <div id="tab-indicators" class="tabpane hidden fade-in">
+          <h3 class="text-sm font-bold text-slate-800 mb-1"><i class="fa-solid fa-microchip mr-1 text-amber-600"></i> <span id="ind-title">Indicators</span></h3>
+          <p class="text-[11px] text-slate-500 mb-4">Computed from live API telemetry. ⚠ = estimated proxy (dedicated sensor recommended).</p>
+          <div id="indicator-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- DESTANA -->
+        <div id="tab-destana" class="tabpane hidden fade-in">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+            <div class="bg-white rounded-xl border border-rose-200 shadow-sm overflow-hidden">
+              <div class="bg-rose-50 px-3 py-2 border-b border-rose-100 flex justify-between items-center"><span class="font-bold text-xs text-rose-700 uppercase"><i class="fa-solid fa-bolt mr-1"></i> Hazard</span><span id="hz-score" class="text-[10px] font-bold text-rose-600"></span></div>
+              <ul id="hz-list" class="p-3 space-y-2 text-xs"></ul>
+            </div>
+            <div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+              <div class="bg-amber-50 px-3 py-2 border-b border-amber-100 flex justify-between items-center"><span class="font-bold text-xs text-amber-700 uppercase"><i class="fa-solid fa-cube mr-1"></i> Vulnerability</span><span id="vu-score" class="text-[10px] font-bold text-amber-600"></span></div>
+              <ul id="vu-list" class="p-3 space-y-2 text-xs"></ul>
+            </div>
+            <div class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
+              <div class="bg-emerald-50 px-3 py-2 border-b border-emerald-100 flex justify-between items-center"><span class="font-bold text-xs text-emerald-700 uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> Capacity</span><span id="cp-score" class="text-[10px] font-bold text-emerald-600"></span></div>
+              <ul id="cp-list" class="p-3 space-y-2 text-xs"></ul>
+            </div>
+          </div>
+          <div id="destana-eq" class="bg-slate-800 text-white rounded-xl p-4 text-center shadow"></div>
+        </div>
+
+        <!-- FORECAST -->
+        <div id="tab-forecast" class="tabpane hidden fade-in">
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm mb-4">
+            <h3 class="text-[11px] font-bold text-slate-500 uppercase mb-3">7-Day Outlook</h3>
+            <div id="forecast-days" class="flex gap-2 overflow-x-auto pb-2"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
+            <h3 class="text-[11px] font-bold text-slate-500 uppercase mb-3">Precipitation & River Discharge (Flood)</h3>
+            <div class="h-48 w-full"><canvas id="floodChart"></canvas></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <h3 class="text-[11px] font-bold text-slate-500 uppercase mb-3">Solar Radiation Context — NASA POWER</h3>
+            <p id="nasa-power" class="text-xs text-slate-600">Loading climate context…</p>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div id="tab-actions" class="tabpane hidden fade-in">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4">
+            <h3 class="text-sm font-bold text-slate-800 mb-1"><i class="fa-solid fa-list-check mr-1 text-amber-600"></i> Anticipatory Actions (AA)</h3>
+            <p class="text-[11px] text-slate-500">Auto-generated protective SOP based on active hazards & available capacity.</p>
+          </div>
+          <div id="actions-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="md:hidden bg-white border-t border-slate-200 shrink-0 flex z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
+  <button id="mtab-map" onclick="mobileView('map')" class="mtab-active flex-1 py-2.5 flex flex-col items-center text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-map text-base mb-0.5"></i>Map</button>
+  <button id="mtab-dash" onclick="mobileView('dash')" class="flex-1 py-2.5 flex flex-col items-center text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Analysis</button>
+</div>
+
+<!-- MODAL ADD SITE -->
+<div id="modal-add-site" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
+  <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-slate-800">Register Site / Museum</h3><button onclick="closeModal('modal-add-site')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+    <div class="p-5">
+      <form id="form-site" onsubmit="saveSite(event)" class="space-y-4 text-sm">
+        <div><label class="block font-semibold text-slate-700 mb-1">Site Name</label><input type="text" id="s-name" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-amber-500 outline-none"></div>
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+          <div class="flex justify-between items-end mb-2"><label class="block font-semibold text-slate-700 text-xs">Coordinates</label><button type="button" onclick="startMapPick()" class="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded hover:bg-amber-200 font-bold"><i class="fa-solid fa-map-pin"></i> Pick on Map</button></div>
+          <div class="grid grid-cols-2 gap-3"><input type="number" step="any" id="s-lat" required class="w-full border rounded p-2 text-xs" placeholder="Latitude"><input type="number" step="any" id="s-lon" required class="w-full border rounded p-2 text-xs" placeholder="Longitude"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block font-semibold text-slate-700 mb-1">Type</label><select id="s-type" class="w-full border rounded-lg p-2 outline-none"><option value="Museum">Museum (Indoor)</option><option value="Cultural Site">Cultural Site (Outdoor)</option></select></div>
+          <div><label class="block font-semibold text-slate-700 mb-1">Primary Material</label><select id="s-material" class="w-full border rounded-lg p-2 outline-none"><option value="Paper">Paper / Manuscript</option><option value="Leather">Leather (Wayang)</option><option value="Textile">Textile</option><option value="Wood">Wood</option><option value="Stone">Stone (Temple)</option><option value="Metal">Metal / Keris</option></select></div>
+        </div>
+        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-lg mt-2">Save Location</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAPACITY -->
+<div id="modal-capacity" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
+  <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+    <div class="p-4 border-b bg-amber-50 flex justify-between items-center"><h3 class="font-bold text-amber-900"><i class="fa-solid fa-shield-halved mr-1"></i> Conservation Capacity</h3><button onclick="closeModal('modal-capacity')" class="text-amber-700 hover:text-amber-900"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-5 text-sm">
+      <p class="text-[11px] text-slate-500 mb-4">Tick available infrastructure. More capacity reduces artifact risk.</p>
+      <form id="form-capacity" onsubmit="saveCapacity(event)" class="space-y-2.5">
+        <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><input type="checkbox" id="cap-hvac" class="w-4 h-4 text-amber-600"><span class="font-semibold text-slate-700">Central HVAC System</span></label>
+        <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><input type="checkbox" id="cap-dehum" class="w-4 h-4 text-amber-600"><span class="font-semibold text-slate-700">Dehumidifier / RH Control</span></label>
+        <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><input type="checkbox" id="cap-fire" class="w-4 h-4 text-amber-600"><span class="font-semibold text-slate-700">Fire Suppression (Non-water)</span></label>
+        <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><input type="checkbox" id="cap-sop" class="w-4 h-4 text-amber-600"><span class="font-semibold text-slate-700">SOP & Trained Staff</span></label>
+        <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><input type="checkbox" id="cap-power" class="w-4 h-4 text-amber-600"><span class="font-semibold text-slate-700">Backup Power</span></label>
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg mt-3">Update Capacity</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SETTINGS -->
+<div id="modal-settings" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
+  <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-slate-800"><i class="fa-solid fa-gear mr-1"></i> API Settings</h3><button onclick="closeModal('modal-settings')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-5 text-sm space-y-4">
+      <p class="text-[11px] text-slate-500">Open-Meteo, USGS, Flood (GloFAS) & NASA POWER work out-of-the-box. The keys below are optional for richer fire & air data.</p>
+      <div><label class="block font-semibold text-slate-700 mb-1 text-xs">NASA FIRMS Map Key <span class="text-slate-400 font-normal">(fire hotspots)</span></label><input type="text" id="set-firms" class="w-full border rounded-lg p-2 text-xs" placeholder="firms.modaps.eosdis.nasa.gov/api/map_key"></div>
+      <div><label class="block font-semibold text-slate-700 mb-1 text-xs">OpenAQ API Key <span class="text-slate-400 font-normal">(optional)</span></label><input type="text" id="set-openaq" class="w-full border rounded-lg p-2 text-xs" placeholder="optional"></div>
+      <button onclick="saveSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-lg">Save Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div id="loader" class="fixed inset-0 bg-white/80 z-[200] hidden items-center justify-center flex-col backdrop-blur-sm">
+  <div class="loader-spinner mb-3"></div>
+  <p class="font-bold text-amber-700 text-sm animate-pulse" id="loader-text">Contacting environmental satellites…</p>
+</div>
+
+<script>
+let db={sites:[]};
+let map=null, markers={}, currentSiteId=null, envChart=null, floodChart=null, isPickingMap=false;
+let settings={firms:'',openaq:''};
+
+/* ---------- MAP ---------- */
+function initMap(){
+  map=L.map('map',{zoomControl:false}).setView([-2.5,118],5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap, &copy; CARTO'}).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  map.on('click',e=>{ if(isPickingMap){ document.getElementById('s-lat').value=e.latlng.lat.toFixed(6); document.getElementById('s-lon').value=e.latlng.lng.toFixed(6); cancelMapPick(); }});
+}
+function startMapPick(){isPickingMap=true;document.getElementById('modal-add-site').classList.add('hidden');document.getElementById('map-picker-instruction').classList.remove('hidden');document.getElementById('map-picker-instruction').classList.add('flex');document.getElementById('map').classList.add('picking-mode'); if(window.innerWidth<768) mobileView('map');}
+function cancelMapPick(){isPickingMap=false;document.getElementById('map-picker-instruction').classList.add('hidden');document.getElementById('map-picker-instruction').classList.remove('flex');document.getElementById('map').classList.remove('picking-mode');document.getElementById('modal-add-site').classList.remove('hidden');}
+
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function showLoader(t){document.getElementById('loader-text').innerText=t;document.getElementById('loader').style.display='flex';}
+function hideLoader(){document.getElementById('loader').style.display='none';}
+
+/* ---------- MOBILE / TABS ---------- */
+function mobileView(v){
+  const dash=document.getElementById('dash-panel'), mapc=document.getElementById('map-container');
+  const mt=document.getElementById('mtab-map'), md=document.getElementById('mtab-dash');
+  if(window.innerWidth>=768) return;
+  if(v==='map'){mapc.classList.remove('hidden');dash.classList.add('hidden');mt.classList.add('mtab-active');md.classList.remove('mtab-active'); setTimeout(()=>map.invalidateSize(),200);}
+  else{dash.classList.remove('hidden');mapc.classList.add('hidden');md.classList.add('mtab-active');mt.classList.remove('mtab-active');}
+}
+function switchTab(t){
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('tab-'+t).classList.remove('hidden');
+  document.getElementById('tab-'+t).classList.add('fade-in');
+  document.querySelectorAll('.dtab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('text-slate-500','border-transparent');});
+  const btn=document.querySelector(`.dtab[data-tab="${t}"]`);btn.classList.add('tab-active');btn.classList.remove('text-slate-500','border-transparent');
+}
+
+/* ---------- SETTINGS ---------- */
+function saveSettings(){settings.firms=document.getElementById('set-firms').value.trim();settings.openaq=document.getElementById('set-openaq').value.trim();localStorage.setItem('heritage_settings',JSON.stringify(settings));closeModal('modal-settings');}
+function loadSettings(){const s=localStorage.getItem('heritage_settings');if(s){settings=JSON.parse(s);document.getElementById('set-firms').value=settings.firms||'';document.getElementById('set-openaq').value=settings.openaq||'';}}
+
+/* ---------- DATA ---------- */
+function loadSampleData(){
+  db.sites=[
+    {id:"S_1",name:"Borobudur Temple",type:"Cultural Site",material:"Stone",lat:-7.6079,lon:110.2038,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:true,hasData:false},
+    {id:"S_2",name:"Prambanan Temple",type:"Cultural Site",material:"Stone",lat:-7.7520,lon:110.4915,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:false,hasData:false},
+    {id:"S_3",name:"Wayang Museum Jakarta",type:"Museum",material:"Leather",lat:-6.1352,lon:106.8133,capHvac:true,capDehum:true,capFire:true,capSop:true,capPower:true,hasData:false},
+    {id:"S_4",name:"National Museum Indonesia",type:"Museum",material:"Textile",lat:-6.1764,lon:106.8222,capHvac:true,capDehum:false,capFire:true,capSop:true,capPower:true,hasData:false}
+  ];
+  saveDb();renderMapMarkers();
+  if(window.innerWidth<768) mobileView('map');
+}
+function saveDb(){localStorage.setItem('heritage_db',JSON.stringify(db));}
+function loadDb(){const d=localStorage.getItem('heritage_db');if(d){db=JSON.parse(d);renderMapMarkers();}}
+
+function renderMapMarkers(){
+  for(let id in markers) map.removeLayer(markers[id]); markers={};
+  if(db.sites.length===0) return;
+  let bounds=L.latLngBounds();
+  db.sites.forEach(s=>{
+    let color=!s.hasData?'#94a3b8':(s.riskScore>=75?'#e11d48':(s.riskScore>=40?'#f59e0b':'#10b981'));
+    const icon=L.divIcon({html:`<div style="width:18px;height:18px;background:${color};border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,className:'',iconSize:[18,18],iconAnchor:[9,9]});
+    const m=L.marker([s.lat,s.lon],{icon}).addTo(map);
+    m.bindTooltip(`<b>${s.name}</b><br><span style="font-size:10px">${s.type}${s.hasData?' · '+s.riskScore+'%':''}</span>`,{direction:'top'});
+    m.on('click',()=>{currentSiteId=s.id; if(window.innerWidth<768) mobileView('dash'); if(s.hasData) renderDashboard(s); else processSiteData(s.id);});
+    markers[s.id]=m; bounds.extend([s.lat,s.lon]);
+  });
+  try{map.fitBounds(bounds,{padding:[40,40],maxZoom:13});}catch(e){}
+}
+
+function saveSite(e){
+  e.preventDefault();
+  const s={id:"S_"+Date.now(),name:document.getElementById('s-name').value,lat:parseFloat(document.getElementById('s-lat').value),lon:parseFloat(document.getElementById('s-lon').value),type:document.getElementById('s-type').value,material:document.getElementById('s-material').value,capHvac:false,capDehum:false,capFire:false,capSop:false,capPower:false,hasData:false};
+  db.sites.push(s);saveDb();closeModal('modal-add-site');document.getElementById('form-site').reset();renderMapMarkers();currentSiteId=s.id;
+  if(window.innerWidth<768) mobileView('dash');
+  processSiteData(s.id);
+}
+function saveCapacity(e){
+  e.preventDefault();const s=db.sites.find(x=>x.id===currentSiteId);if(!s)return;
+  s.capHvac=document.getElementById('cap-hvac').checked;s.capDehum=document.getElementById('cap-dehum').checked;s.capFire=document.getElementById('cap-fire').checked;s.capSop=document.getElementById('cap-sop').checked;s.capPower=document.getElementById('cap-power').checked;
+  saveDb();closeModal('modal-capacity');processSiteData(currentSiteId);
+}
+function populateCapacityForm(s){document.getElementById('cap-hvac').checked=s.capHvac;document.getElementById('cap-dehum').checked=s.capDehum;document.getElementById('cap-fire').checked=s.capFire;document.getElementById('cap-sop').checked=s.capSop;document.getElementById('cap-power').checked=s.capPower;}
+
+/* ---------- API ORCHESTRATION ---------- */
+async function processSiteData(id){
+  const s=db.sites.find(x=>x.id===id);if(!s)return;
+  showLoader("Querying Open-Meteo · USGS · GloFAS · NASA…");
+  try{
+    const urlWeather=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,soil_temperature_0cm,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_max,precipitation_sum,weather_code,uv_index_max,wind_speed_10m_max,shortwave_radiation_sum&timezone=auto&forecast_days=7`;
+    const urlAQ=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${s.lat}&longitude=${s.lon}&current=pm2_5,pm10,dust,uv_index,ozone,nitrogen_dioxide,sulphur_dioxide&timezone=auto`;
+    let dStart=new Date();dStart.setDate(dStart.getDate()-7);
+    const urlEQ=`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${s.lat}&longitude=${s.lon}&maxradiuskm=100&starttime=${dStart.toISOString().split('T')[0]}&minmagnitude=2.5`;
+    const urlFlood=`https://flood-api.open-meteo.com/v1/flood?latitude=${s.lat}&longitude=${s.lon}&daily=river_discharge&forecast_days=7`;
+
+    const [resW,resAQ,resEQ,resFL]=await Promise.all([
+      fetch(urlWeather),
+      fetch(urlAQ).catch(()=>({json:()=>({current:{}})})),
+      fetch(urlEQ).catch(()=>({json:()=>({features:[]})})),
+      fetch(urlFlood).catch(()=>({json:()=>({daily:{}})}))
+    ]);
+    const dW=await resW.json(), dAQ=await resAQ.json(), dEQ=await resEQ.json(), dFL=await resFL.json();
+
+    calculateRisk(s,dW,dAQ,dEQ,dFL);
+    s.hasData=true;saveDb();hideLoader();renderMapMarkers();renderDashboard(s);
+    fetchNasaPower(s); // background enrich
+    if(settings.firms) fetchFirms(s);
+  }catch(err){console.error(err);hideLoader();alert("Failed to reach environmental APIs. Check connection.");}
+}
+
+async function fetchNasaPower(s){
+  const el=document.getElementById('nasa-power');
+  try{
+    let end=new Date();end.setDate(end.getDate()-2);let start=new Date();start.setDate(start.getDate()-12);
+    const f=d=>d.toISOString().split('T')[0].replace(/-/g,'');
+    const url=`https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN,RH2M,T2M&community=RE&longitude=${s.lon}&latitude=${s.lat}&start=${f(start)}&end=${f(end)}&format=JSON`;
+    const r=await fetch(url);const d=await r.json();
+    const rad=d.properties.parameter.ALLSKY_SFC_SW_DWN;
+    const vals=Object.values(rad).filter(v=>v>-100);
+    const avg=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+    let lvl=avg>6?'high':avg>4?'moderate':'low';
+    el.innerHTML=`Avg surface solar radiation: <strong>${avg} kWh/m²/day</strong> (${lvl}). ${lvl==='high'?'⚠ Elevated UV-driven fading risk for exposed/organic materials — limit direct exposure & light levels.':'Photodegradation pressure within manageable range.'}`;
+  }catch(e){el.innerHTML='NASA POWER context unavailable right now.';}
+}
+async function fetchFirms(s){
+  try{
+    const url=`https://firms.modaps.eosdis.nasa.gov/api/area/csv/${settings.firms}/VIIRS_SNPP_NRT/${(s.lon-0.5).toFixed(2)},${(s.lat-0.5).toFixed(2)},${(s.lon+0.5).toFixed(2)},${(s.lat+0.5).toFixed(2)}/2`;
+    const r=await fetch(url);const t=await r.text();
+    const lines=t.trim().split('\n');s.firePoints=Math.max(lines.length-1,0);
+    if(s.hasData&&currentSiteId===s.id) renderDashboard(s);
+  }catch(e){console.log('FIRMS error',e);}
+}
+
+/* ---------- RISK ENGINE (DESTANA) ---------- */
+function calculateRisk(s,w,aq,eq,fl){
+  const c=w.current||{};
+  s.apiTemp=c.temperature_2m; s.apiRH=c.relative_humidity_2m; s.apiRain=c.precipitation??0;
+  s.apiWind=c.wind_speed_10m??0; s.soilTemp=c.soil_temperature_0cm; s.soilMoist=c.soil_moisture_0_to_1cm;
+  const a=aq.current||{};
+  s.apiPM25=Math.round(a.pm2_5||0); s.apiPM10=Math.round(a.pm10||0); s.apiDust=Math.round(a.dust||0);
+  s.apiUV=a.uv_index??(w.daily?.uv_index_max?.[0]??0); s.apiO3=a.ozone||0; s.apiNO2=a.nitrogen_dioxide||0; s.apiSO2=a.sulphur_dioxide||0;
+
+  s.maxEQ=0;s.eqCount=0;
+  if(eq?.features?.length){s.eqCount=eq.features.length;s.maxEQ=Math.max(...eq.features.map(f=>f.properties.mag));}
+
+  // flood
+  s.discharge=fl?.daily?.river_discharge||[];
+  s.maxDischarge=s.discharge.length?Math.max(...s.discharge.filter(v=>v!=null)):0;
+  const baseDis=s.discharge.length?s.discharge[0]:0;
+  s.floodLevel = (s.maxDischarge>baseDis*2.5 && s.maxDischarge>50)?'High':(s.maxDischarge>baseDis*1.5 && s.maxDischarge>20)?'Moderate':'Low';
+
+  // daily
+  s.chartDates=w.daily.time; s.chartTmax=w.daily.temperature_2m_max; s.chartTmin=w.daily.temperature_2m_min;
+  s.chartRH=w.daily.relative_humidity_2m_max; s.chartCode=w.daily.weather_code; s.chartPrecip=w.daily.precipitation_sum;
+  s.maxPrecip=Math.max(...s.chartPrecip); s.diurnal=(s.chartTmax[0]-s.chartTmin[0]);
+
+  // ---------- HAZARD (0-12) ----------
+  let H=0; const hz=[];
+  const RH=s.apiRH, T=s.apiTemp;
+  if(RH>80){H+=4;hz.push(['High humidity','crit','RH '+RH+'% — mold/corrosion driver']);}
+  else if(RH>65){H+=2;hz.push(['Elevated humidity','warn','RH '+RH+'%']);}
+  else if(RH<35){H+=2;hz.push(['Very dry air','warn','RH '+RH+'% — embrittlement risk']);}
+  else hz.push(['Humidity stable','ok','RH '+RH+'%']);
+
+  if(s.apiPM25>50||s.apiDust>40){H+=2;hz.push(['Air pollution / dust','warn','PM2.5 '+s.apiPM25+', dust '+s.apiDust]);}
+  if(s.maxPrecip>50){H+=2;hz.push(['Heavy rainfall','crit','Up to '+s.maxPrecip.toFixed(0)+' mm/day']);}
+  else if(s.maxPrecip>20){H+=1;hz.push(['Moderate rain','warn',s.maxPrecip.toFixed(0)+' mm/day']);}
+  if(s.apiUV>8||T>33){H+=2;hz.push(['High UV / heat','warn','UV '+(s.apiUV||0)+', '+T+'°C']);}
+  if(s.maxEQ>=4.5){H+=4;hz.push(['Seismic activity','crit','M'+s.maxEQ+' within 100km']);}
+  else if(s.maxEQ>0){H+=1;hz.push(['Minor seismicity','warn','M'+s.maxEQ]);}
+  if(s.floodLevel==='High'){H+=3;hz.push(['Flood threat','crit','River discharge surge']);}
+  else if(s.floodLevel==='Moderate'){H+=1;hz.push(['Flood watch','warn','Rising discharge']);}
+  if(s.firePoints>0){H+=2;hz.push(['Fire hotspots nearby','crit',s.firePoints+' FIRMS detections']);}
+  s.hazardList=hz; s.hazardScore=Math.min(H,12);
+
+  // ---------- VULNERABILITY (1-5) ----------
+  let V=2; const vu=[];
+  const matMap={Paper:5,Leather:5,Textile:4,Wood:4,Metal:3,Stone:2};
+  V=matMap[s.material]||3;
+  vu.push([s.material+' material','base','Intrinsic fragility '+V+'/5']);
+  if(s.type==='Cultural Site'){vu.push(['Outdoor exposure','warn','Directly exposed to weather']); if(s.apiRain>0){V+=1;vu.push(['Active precipitation on surface','warn','Acid rain / erosion']);}}
+  if((s.material==='Wood'||s.material==='Paper'||s.material==='Textile')&&RH>60&&T>20){vu.push(['Biological susceptibility','warn','Organic material in warm/humid air']);}
+  s.vulnList=vu; s.vulnScore=Math.min(V,5);
+
+  // ---------- CAPACITY (1-6) ----------
+  let C=1; const cp=[];
+  const addCap=(flag,label)=>{if(flag){C++;cp.push([label,'ok','Available']);}else{cp.push([label,'miss','Not available']);}};
+  addCap(s.capHvac,'Central HVAC'); addCap(s.capDehum,'Dehumidifier'); addCap(s.capFire,'Fire suppression'); addCap(s.capSop,'SOP & staff'); addCap(s.capPower,'Backup power');
+  if(s.type==='Cultural Site'){cp.push(['Outdoor limits protection','warn','Infrastructure shielding halved']);}
+  s.capScoreRaw=C;
+  let capEff=s.type==='Cultural Site'?C/2:C;
+  s.capList=cp; s.capScore=Math.max(capEff,0.5);
+
+  // ---------- FINAL RISK ----------
+  let raw=(s.hazardScore*s.vulnScore)/s.capScore;
+  s.riskScore=Math.round(Math.min((raw/24)*100,100));
+  s.riskLevel=s.riskScore>=75?'HIGH':s.riskScore>=40?'MEDIUM':'LOW';
+
+  computeIndicators(s);
+  generateActions(s);
+}
+
+/* ---------- INDICATORS ---------- */
+function statusClass(l){return l==='crit'?'bg-rose-100 text-rose-700':l==='warn'?'bg-amber-100 text-amber-700':l==='ok'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500';}
+function dotClass(l){return l==='crit'?'text-rose-500':l==='warn'?'text-amber-500':l==='ok'?'text-emerald-500':'text-slate-400';}
+
+function computeIndicators(s){
+  const ind=[];const RH=s.apiRH,T=s.apiTemp;
+  if(s.type==='Museum'){
+    ind.push(ic('fa-droplet','Relative Humidity',RH+'%', RH>65||RH<40?'warn':RH>75||RH<35?'crit':'ok','Ideal 45–55% for collections'));
+    ind.push(ic('fa-temperature-half','Temperature',T+'°C', T>26||T<16?'warn':'ok','Stable 18–22°C recommended'));
+    ind.push(ic('fa-sun','UV Index',(s.apiUV||0), s.apiUV>5?'crit':s.apiUV>2?'warn':'ok','UV accelerates fading'));
+    let lux=Math.round((s.apiUV||0)*70+ (s.chartCode?.[0]<=3?120:60));
+    ind.push(ic('fa-lightbulb','Light (est.) ⚠',lux+' lx', lux>200?'crit':lux>120?'warn':'ok','Sensitive items: <50 lx'));
+    ind.push(ic('fa-smog','PM2.5',s.apiPM25+' µg/m³', s.apiPM25>50?'crit':s.apiPM25>25?'warn':'ok','Fine particulates'));
+    ind.push(ic('fa-wind','Dust / PM10',s.apiPM10+' µg/m³', s.apiPM10>80?'crit':s.apiPM10>40?'warn':'ok','Abrasive deposition'));
+    let voc=Math.round((s.apiO3*0.4+s.apiNO2*0.3)/2);
+    ind.push(ic('fa-flask','VOC (proxy) ⚠',voc+' idx', voc>40?'crit':voc>20?'warn':'ok','Estimated from O₃/NO₂'));
+    ind.push(ic('fa-bacterium','Mold Index',moldIndex(RH,T).label, moldIndex(RH,T).lvl, moldIndex(RH,T).note));
+    let pest=(T>=20&&T<=32&&RH>60);ind.push(ic('fa-bug','Insect/Pest Risk',pest?'Elevated':'Low', pest?'warn':'ok','Termite/silverfish favorable @ warm+humid'));
+  }else{
+    ind.push(ic('fa-cloud-showers-heavy','Rainfall (max/day)',s.maxPrecip.toFixed(0)+' mm', s.maxPrecip>50?'crit':s.maxPrecip>20?'warn':'ok','7-day forecast peak'));
+    let sm=s.soilMoist!=null?(s.soilMoist*100).toFixed(0)+'%':((RH>80?'High':RH>60?'Med':'Low'));
+    ind.push(ic('fa-water','Stone Moisture',sm, RH>80?'crit':RH>65?'warn':'ok','Capillary water in porous stone'));
+    let moss=(RH>78&&T>=10&&T<=30&&s.maxPrecip>10);ind.push(ic('fa-seedling','Moss/Lichen Growth',moss?'High':'Low', moss?'crit':'ok','Biological colonization driver'));
+    ind.push(ic('fa-house-crack','Crack Risk',s.diurnal.toFixed(0)+'°C Δ'+(s.maxEQ>4?' +seismic':''), (s.diurnal>13||s.maxEQ>4.5)?'crit':s.diurnal>9?'warn':'ok','Thermal cycling + vibration'));
+    let st=s.soilTemp!=null?s.soilTemp+'°C':T+'°C';ind.push(ic('fa-temperature-arrow-up','Surface Temp',st, (s.soilTemp||T)>38?'crit':(s.soilTemp||T)>33?'warn':'ok','Surface expansion stress'));
+    ind.push(ic('fa-mountain','Erosion Risk',s.maxPrecip>50?'High':s.maxPrecip>20?'Moderate':'Low', s.maxPrecip>50?'crit':s.maxPrecip>20?'warn':'ok','Rain intensity on reliefs'));
+    ind.push(ic('fa-wave-square','Seismic Vibration',s.maxEQ>0?'M'+s.maxEQ:'None', s.maxEQ>=4.5?'crit':s.maxEQ>0?'warn':'ok',s.eqCount+' events / 7d (USGS)'));
+    ind.push(ic('fa-volcano','Volcanic Ash',s.firePoints>0?'Hotspots: '+s.firePoints:'Monitoring ⚠', s.firePoints>0?'warn':'ok','FIRMS thermal (needs key)'));
+    ind.push(ic('fa-water','Flood (GloFAS)',s.floodLevel, s.floodLevel==='High'?'crit':s.floodLevel==='Moderate'?'warn':'ok','River discharge trend'));
+  }
+  s.indicators=ind;
+}
+function ic(icon,name,val,lvl,note){return {icon,name,val,lvl,note};}
+function moldIndex(RH,T){
+  if(RH>=80&&T>=5&&T<=40) return {label:'Active (5–6)',lvl:'crit',note:'Spores germinating — intervene'};
+  if(RH>=70) return {label:'Risk (3–4)',lvl:'warn',note:'Approaching growth threshold'};
+  if(RH>=60) return {label:'Watch (1–2)',lvl:'warn',note:'Monitor closely'};
+  return {label:'Safe (0)',lvl:'ok',note:'Below growth limit'};
+}
+
+/* ---------- ACTIONS ---------- */
+function generateActions(s){
+  const acts=[];const RH=s.apiRH,T=s.apiTemp;const M=s.material;
+  const isMuseum=s.type==='Museum';
+  if(RH>75||(RH>65&&['Paper','Leather','Textile','Wood'].includes(M))){
+    if(s.capDehum) acts.push(['fa-power-off','high','Activate dehumidifiers in '+M+' storage — target RH 50–55%.']);
+    else acts.push(['fa-triangle-exclamation','high','URGENT: deploy portable dehumidifiers / silica gel; isolate affected gallery.']);
+    if(isMuseum) acts.push(['fa-door-closed','med','Close or limit visitor access to reduce humidity load from breath/perspiration.']);
+  }
+  if(moldIndex(RH,T).lvl==='crit') acts.push(['fa-bacterium','high','Mold alert: inspect & ventilate; quarantine items showing growth; reduce RH immediately.']);
+  if((T>=20&&T<=32&&RH>60)&&['Wood','Paper','Textile'].includes(M)) acts.push(['fa-bug','med','Deploy pest/termite traps; schedule entomological inspection of '+M+' items.']);
+  if(s.apiUV>5||isMuseum&&s.apiUV>2){ if(isMuseum) acts.push(['fa-lightbulb','med','Lower light intensity / fit UV filters; sensitive items below 50 lux.']); else acts.push(['fa-umbrella','med','Install protective canopy/shade over exposed reliefs to cut UV fading.']);}
+  if(s.apiPM25>50||s.apiDust>40){ if(isMuseum) acts.push(['fa-fan','med','Close ventilation intakes; activate fine-particulate filtration (HVAC).']); else acts.push(['fa-spray-can-sparkles','low','Schedule soft-brush dust removal after pollution episode.']);}
+  if(s.maxPrecip>50||s.floodLevel==='High'){ if(isMuseum) acts.push(['fa-arrow-up','high','Move artifacts to upper/elevated floors; deploy flood barriers at entrances.']); else acts.push(['fa-tarp','high','Cover key reliefs/statues with protective sheeting against driving rain.']); acts.push(['fa-water','med','Clear drainage channels around the site to prevent pooling/seepage.']);}
+  if(s.maxEQ>=4.5){ acts.push(['fa-helmet-safety','high','Seismic check: inspect structural cracks & keystone shift; evacuate visitors if needed.']); acts.push(['fa-link','med','Secure display mounts & seismic isolation for free-standing artifacts.']);}
+  if(s.firePoints>0){ acts.push(['fa-fire-extinguisher','high','Verify fire suppression readiness; clear surrounding vegetation; brief staff.']);}
+  if(s.type==='Cultural Site'&&['Stone'].includes(M)&&s.maxPrecip>20) acts.push(['fa-broom','low','Inspect for acid-rain etching & schedule biocide treatment for moss.']);
+  if(acts.length===0) acts.push(['fa-circle-check','ok','Conditions favorable — maintain routine monitoring & scheduled cleaning SOP.']);
+  s.actions=acts;
+}
+
+/* ---------- RENDER ---------- */
+function renderDashboard(s){
+  document.getElementById('welcome-state').classList.add('hidden');
+  document.getElementById('dashboard-content').classList.remove('hidden');
+  document.getElementById('d-name').innerText=s.name;
+  document.getElementById('d-type').innerText=s.type;
+  document.getElementById('d-material').innerText=s.material;
+  document.getElementById('d-coord').innerText=s.lat.toFixed(3)+', '+s.lon.toFixed(3);
+  populateCapacityForm(s);
+
+  // gauge
+  const col=s.riskLevel==='HIGH'?'#e11d48':s.riskLevel==='MEDIUM'?'#f59e0b':'#10b981';
+  const deg=(s.riskScore/100)*360;
+  document.getElementById('risk-gauge').style.background=`conic-gradient(${col} ${deg}deg,#e2e8f0 ${deg}deg)`;
+  document.getElementById('risk-score').innerText=s.riskScore+'%';
+  document.getElementById('risk-score').style.color=col;
+  const rb=document.getElementById('risk-badge');
+  rb.innerText=s.riskLevel+' RISK';
+  rb.className='text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 border '+(s.riskLevel==='HIGH'?'bg-rose-50 border-rose-300 text-rose-700':s.riskLevel==='MEDIUM'?'bg-amber-50 border-amber-300 text-amber-700':'bg-emerald-50 border-emerald-300 text-emerald-700');
+
+  // overview tiles
+  document.getElementById('ov-rh').innerText=s.apiRH+'%';
+  document.getElementById('ov-temp').innerText=s.apiTemp+'°';
+  document.getElementById('ov-pm25').innerText=s.apiPM25;
+  const pb=document.getElementById('ov-pm25-badge');
+  pb.innerText=s.apiPM25>50?'Unhealthy':s.apiPM25>25?'Moderate':'Good';
+  pb.className='text-[9px] px-1.5 py-0.5 rounded inline-block mt-0.5 '+(s.apiPM25>50?'bg-rose-100 text-rose-700':s.apiPM25>25?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700');
+  document.getElementById('ov-eq').innerText=s.maxEQ>0?'M'+s.maxEQ:'None';
+  document.getElementById('ov-flood').innerText=s.floodLevel;
+
+  // alert
+  renderAlert(s);
+  // indicators
+  document.getElementById('ind-title').innerText=s.type==='Museum'?'Museum Collection Indicators':'Cultural Site Indicators';
+  const ig=document.getElementById('indicator-grid');ig.innerHTML='';
+  s.indicators.forEach(i=>{
+    ig.innerHTML+=`<div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm flex items-start gap-3">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${statusClass(i.lvl)}"><i class="fa-solid ${i.icon}"></i></div>
+      <div class="min-w-0"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-700">${i.name}</span></div>
+      <div class="text-lg font-extrabold text-slate-800 leading-none mt-0.5">${i.val}</div>
+      <p class="text-[10px] text-slate-400 mt-1 leading-tight">${i.note}</p></div></div>`;
+  });
+
+  // destana
+  renderDestana(s);
+  // forecast
+  renderForecast(s);
+  // actions
+  const al=document.getElementById('actions-list');al.innerHTML='';
+  s.actions.forEach(a=>{
+    const pri=a[1];const pc=pri==='high'?'border-rose-200 bg-rose-50':pri==='med'?'border-amber-200 bg-amber-50':pri==='ok'?'border-emerald-200 bg-emerald-50':'border-slate-200 bg-white';
+    const ic2=pri==='high'?'text-rose-600':pri==='med'?'text-amber-600':pri==='ok'?'text-emerald-600':'text-slate-600';
+    const tag=pri==='high'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-600 text-white">PRIORITY</span>':pri==='med'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white">ADVISED</span>':'';
+    al.innerHTML+=`<div class="rounded-xl border ${pc} p-3.5 flex gap-3 items-start shadow-sm"><i class="fa-solid ${a[0]} ${ic2} text-lg mt-0.5 w-5 text-center"></i><div class="flex-1"><div class="flex justify-between items-center mb-0.5">${tag}</div><p class="text-xs text-slate-700 leading-relaxed">${a[2]}</p></div></div>`;
+  });
+
+  switchTab('overview');
+  renderChart(s);
+}
+
+function renderAlert(s){
+  const box=document.getElementById('ibf-alert');
+  if(s.riskLevel==='HIGH'){
+    box.className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML=`<div class="bg-rose-100 text-rose-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+      <div><h3 class="font-bold text-rose-800 text-sm mb-0.5">CONSERVATION ALERT — Anticipatory Action Required</h3>
+      <p class="text-xs text-rose-700 leading-relaxed">Critical degradation pressure on <b>${s.material}</b> (RH ${s.apiRH}%, risk ${s.riskScore}%). Open the <b>Actions</b> tab for the protective SOP checklist.</p></div>`;
+  }else if(s.riskLevel==='MEDIUM'){
+    box.className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML=`<div class="bg-amber-100 text-amber-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-circle-exclamation text-lg"></i></div>
+      <div><h3 class="font-bold text-amber-800 text-sm mb-0.5">ELEVATED RISK — Heightened Monitoring</h3>
+      <p class="text-xs text-amber-700 leading-relaxed">Environmental stressors are above baseline for <b>${s.material}</b>. Review preventive measures in the Actions tab.</p></div>`;
+  }else{
+    box.className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML=`<div class="bg-emerald-100 text-emerald-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-check-double text-lg"></i></div>
+      <div><h3 class="font-bold text-emerald-800 text-sm mb-0.5">CONDITIONS FAVORABLE</h3>
+      <p class="text-xs text-emerald-700 leading-relaxed">Microclimate is within safe range for <b>${s.material}</b>. Continue routine monitoring & cleaning SOP.</p></div>`;
+  }
+}
+
+function renderDestana(s){
+  const fill=(elId,list)=>{const el=document.getElementById(elId);el.innerHTML='';list.forEach(([t,l,n])=>{el.innerHTML+=`<li class="flex items-start gap-2"><i class="fa-solid fa-circle text-[6px] mt-1.5 ${dotClass(l)}"></i><div><span class="font-semibold text-slate-700">${t}</span><br><span class="text-[10px] text-slate-400">${n}</span></div></li>`;});};
+  fill('hz-list',s.hazardList);fill('vu-list',s.vulnList);fill('cp-list',s.capList);
+  document.getElementById('hz-score').innerText=s.hazardScore+'/12';
+  document.getElementById('vu-score').innerText=s.vulnScore+'/5';
+  document.getElementById('cp-score').innerText=s.capScoreRaw+'/6';
+  document.getElementById('destana-eq').innerHTML=`<div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Risk Equation</div>
+    <div class="text-sm font-semibold">Risk = (Hazard ${s.hazardScore} × Vulnerability ${s.vulnScore}) ÷ Capacity ${s.capScore.toFixed(1)} → <span class="${s.riskLevel==='HIGH'?'text-rose-400':s.riskLevel==='MEDIUM'?'text-amber-400':'text-emerald-400'}">${s.riskScore}% ${s.riskLevel}</span></div>`;
+}
+
+function renderForecast(s){
+  const fc=document.getElementById('forecast-days');fc.innerHTML='';
+  const wIcon=c=>c<=3?'<i class="fa-solid fa-sun text-amber-500"></i>':c>=45&&c<=48?'<i class="fa-solid fa-smog text-slate-400"></i>':c>=51&&c<=67?'<i class="fa-solid fa-cloud-rain text-sky-400"></i>':c>=71&&c<=82?'<i class="fa-solid fa-cloud-showers-heavy text-sky-600"></i>':c>=95?'<i class="fa-solid fa-cloud-bolt text-indigo-600"></i>':'<i class="fa-solid fa-cloud text-slate-400"></i>';
+  for(let i=0;i<s.chartDates.length;i++){
+    const d=new Date(s.chartDates[i]);const day=d.toLocaleDateString('en-US',{weekday:'short'});
+    fc.innerHTML+=`<div class="flex flex-col items-center bg-slate-50 border border-slate-100 rounded-lg p-2 min-w-[64px] shrink-0">
+      <span class="text-[10px] text-slate-500 uppercase font-bold">${day}</span>
+      <div class="text-lg my-1">${wIcon(s.chartCode[i])}</div>
+      <div class="text-[9px] text-slate-700 font-bold">${Math.round(s.chartTmax[i])}°/${Math.round(s.chartTmin[i])}°</div>
+      <div class="text-[9px] text-sky-600 font-bold mt-0.5">${s.chartRH[i]}% RH</div>
+      <div class="text-[9px] text-cyan-600 mt-0.5">${s.chartPrecip[i].toFixed(0)}mm</div></div>`;
+  }
+  // flood chart
+  const ctx=document.getElementById('floodChart').getContext('2d');
+  if(floodChart)floodChart.destroy();
+  const lbls=s.chartDates.map(d=>new Date(d).toLocaleDateString('en-US',{day:'numeric',month:'short'}));
+  floodChart=new Chart(ctx,{type:'bar',data:{labels:lbls,datasets:[
+    {label:'Precipitation (mm)',data:s.chartPrecip,backgroundColor:'rgba(14,165,233,.6)',yAxisID:'y',order:2},
+    {label:'River Discharge (m³/s)',data:s.discharge.slice(0,7),type:'line',borderColor:'#06b6d4',borderWidth:2,tension:.4,yAxisID:'y1',order:1,backgroundColor:'rgba(6,182,212,.1)',fill:true}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:12,font:{size:10}}}},scales:{y:{position:'left',title:{display:true,text:'mm',font:{size:9}}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'m³/s',font:{size:9}}}}}});
+}
+
+function renderChart(s){
+  const ctx=document.getElementById('envChart').getContext('2d');
+  if(envChart)envChart.destroy();
+  const lbls=s.chartDates.map(d=>new Date(d).toLocaleDateString('en-US',{day:'numeric',month:'short'}));
+  envChart=new Chart(ctx,{type:'line',data:{labels:lbls,datasets:[
+    {label:'Humidity (RH %)',data:s.chartRH,borderColor:'rgba(14,165,233,1)',backgroundColor:'rgba(14,165,233,.1)',borderWidth:2,fill:true,tension:.4,yAxisID:'y'},
+    {label:'Max Temp (°C)',data:s.chartTmax,borderColor:'rgba(244,63,94,1)',borderWidth:2,borderDash:[5,5],tension:.4,yAxisID:'y1'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{y:{position:'left',min:30,max:100,title:{display:true,text:'RH %',font:{size:9}}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'°C',font:{size:9}}}}}});
+}
+
+window.addEventListener('resize',()=>{if(window.innerWidth>=768){document.getElementById('dash-panel').classList.remove('hidden');document.getElementById('map-container').classList.remove('hidden');}else{mobileView(document.getElementById('mtab-dash').classList.contains('mtab-active')?'dash':'map');}});
+
+document.addEventListener('DOMContentLoaded',()=>{initMap();loadSettings();loadDb();});
+</script>
+</body>
+</html>
