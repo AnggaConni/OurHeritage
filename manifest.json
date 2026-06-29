@@ -15,11 +15,17 @@
     "education",
     "government"
   ],
-  "icons": [
+"icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%2392400e'/%3E%3Cpath d='M128 48 L40 104 H216 L128 48 Z' fill='%23fef3c7'/%3E%3Cpath d='M56 120 V192 H72 V120 H56 Z' fill='%23fef3c7'/%3E%3Cpath d='M104 120 V192 H120 V120 H104 Z' fill='%23fef3c7'/%3E%3Cpath d='M136 120 V192 H152 V120 H136 Z' fill='%23fef3c7'/%3E%3Cpath d='M184 120 V192 H200 V120 H184 Z' fill='%23fef3c7'/%3E%3Cpath d='M40 200 V216 H216 V200 H40 Z' fill='%23fef3c7'/%3E%3C/svg%3E",
-      "type": "image/svg+xml",
-      "sizes": "any",
+      "src": "192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
