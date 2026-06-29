@@ -1,33 +1,35 @@
-const CACHE_NAME = 'heritage-ews-v2';
+const VERSION = 'v3';
+const STATIC_CACHE = `heritage-static-${VERSION}`;
+const API_CACHE = `heritage-api-${VERSION}`;
+const IMAGE_CACHE = `heritage-image-${VERSION}`;
 
-// Daftar aset inti yang akan disimpan ke memori HP/Desktop (Cache)
-const ASSETS_TO_CACHE = [
+// Daftar aset inti untuk App Shell (Network First)
+const CORE_ASSETS = [
     '/OurHeritage/',
     '/OurHeritage/index.html',
-    '/OurHeritage/screenshot.jpg',
-    '/OurHeritage/192.png',  // <-- Tambahkan ini
-    '/OurHeritage/512.png'   // <-- Tambahkan ini
+    '/OurHeritage/manifest.json'
 ];
 
-// 1. INSTALL EVENT - Menyimpan aset inti ke Cache saat pertama kali dibuka
+// 1. INSTALL EVENT
 self.addEventListener('install', (event) => {
+    console.log('[SW v3] Installing Service Worker...');
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching App Shell');
-            return cache.addAll(ASSETS_TO_CACHE);
+        caches.open(STATIC_CACHE).then((cache) => {
+            return cache.addAll(CORE_ASSETS);
         })
     );
-    self.skipWaiting(); // Langsung aktif tanpa menunggu tab ditutup
+    self.skipWaiting();
 });
 
-// 2. ACTIVATE EVENT - Menghapus Cache lama jika ada versi aplikasi baru
+// 2. ACTIVATE EVENT - Hapus Cache v1/v2 yang lama
 self.addEventListener('activate', (event) => {
+    console.log('[SW v3] Activating & Cleaning old caches...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cache) => {
-                    if (cache !== CACHE_NAME) {
-                        console.log('[Service Worker] Deleting old cache:', cache);
+                    if (!cache.includes(VERSION)) {
+                        console.log(`[SW v3] Deleting old cache: ${cache}`);
                         return caches.delete(cache);
                     }
                 })
@@ -37,37 +39,100 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// 3. FETCH EVENT - Mengatur cara aplikasi meminta data
+// 3. FETCH EVENT - Router Strategi 4 Lapis
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+    // Abaikan request selain GET (seperti POST, PUT)
+    if (event.request.method !== 'GET') return;
 
-    // DYNAMIC DATA (API): Lewati cache, HARUS minta langsung ke internet agar EWS selalu real-time
-    if (url.hostname.includes('open-meteo.com') || url.hostname.includes('usgs.gov')) {
-        return; // Biarkan browser mengambil dari jaringan (Network Only)
+    const url = new URL(event.request.url);
+    const request = event.request;
+
+    // STRATEGI 2: API -> Network First + Cache (Fallback)
+    if (url.hostname.includes('open-meteo.com') || 
+        url.hostname.includes('usgs.gov') || 
+        url.hostname.includes('nasa.gov')) {
+        event.respondWith(networkFirst(request, API_CACHE));
+        return;
     }
 
-    // STATIC ASSETS: Cek Cache dulu, kalau tidak ada baru donwload dari internet (Cache First)
-    event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            // Kembalikan dari cache jika ada
-            if (cachedResponse) {
-                return cachedResponse;
-            }
+    // STRATEGI 4: Images, Icons, Fonts -> Cache First (Fallback Network)
+    if (request.destination === 'image' || request.destination === 'font' || 
+        url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.woff2')) {
+        event.respondWith(cacheFirst(request, IMAGE_CACHE));
+        return;
+    }
 
-            // Jika tidak ada di cache, ambil dari jaringan
-            return fetch(event.request).then((networkResponse) => {
-                // Simpan hasil download baru ke dalam cache untuk request berikutnya
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
-                return networkResponse;
-            }).catch(() => {
-                // Opsional: Apa yang terjadi jika offline dan tidak ada di cache
-                console.log('[Service Worker] Offline & No Cache Found');
-            });
-        })
-    );
+    // STRATEGI 3: JS & CSS -> Stale While Revalidate
+    if (request.destination === 'script' || request.destination === 'style' || 
+        url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+        event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+        return;
+    }
+
+    // STRATEGI 1: HTML & Navigasi Lainnya -> Network First (Fallback Cache)
+    if (request.destination === 'document' || request.mode === 'navigate') {
+        event.respondWith(networkFirst(request, STATIC_CACHE));
+        return;
+    }
+
+    // Default Fallback
+    event.respondWith(networkFirst(request, STATIC_CACHE));
 });
+
+
+/* =========================================================
+   HELPER FUNCTIONS: 3 Strategi Caching (Inti Mesin SW)
+   ========================================================= */
+
+// Strategi A: Network First (Coba download dulu. Kalau offline, pakai Cache)
+async function networkFirst(request, cacheName) {
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const cache = await caches.open(cacheName);
+            cache.put(request, networkResponse.clone()); // Simpan diam-diam
+        }
+        return networkResponse;
+    } catch (error) {
+        console.log(`[SW v3] Network failed for ${request.url}, serving from ${cacheName}`);
+        const cachedResponse = await caches.match(request);
+        return cachedResponse || Promise.reject('No-match');
+    }
+}
+
+// Strategi B: Cache First (Cek memori dulu. Kalau tidak ada, baru download)
+async function cacheFirst(request, cacheName) {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+        return cachedResponse; // Langsung tampil!
+    }
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const cache = await caches.open(cacheName);
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    } catch (error) {
+        console.log(`[SW v3] Offline and no cache for image/font: ${request.url}`);
+    }
+}
+
+// Strategi C: Stale-While-Revalidate (Tampil instan dari cache, download update di belakang layar)
+async function staleWhileRevalidate(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+    
+    // Lakukan fetch di background untuk update cache
+    const networkFetch = fetch(request).then((networkResponse) => {
+        if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    }).catch(() => {
+        console.log(`[SW v3] Offline, couldn't revalidate: ${request.url}`);
+    });
+
+    // Kembalikan cache langsung (jika ada), kalau kosong tunggu hasil download
+    return cachedResponse || networkFetch;
+}
