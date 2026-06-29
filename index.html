@@ -3,35 +3,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Heritage Conserv-EWS | Cultural Sites & Museums</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2392400e'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-size='36'%3E🏛️%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Early Warning System for climate & environmental risk in Cultural Heritage & Museum conservation.">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body{font-family:'Plus Jakarta Sans',sans-serif;background-color:#f8fafc;}
-  ::-webkit-scrollbar{width:6px;height:6px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;}
-  ::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
-  .loader-spinner{border:3px solid #f3f3f3;border-top:3px solid #b45309;border-radius:50%;width:26px;height:26px;animation:spin 1s linear infinite;}
-  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-  .picking-mode{cursor:crosshair!important;}
-  .tab-active{color:#b45309;border-color:#b45309;}
-  .mtab-active{color:#b45309;background:#fffbeb;}
-  .fade-in{animation:fade .35s ease;}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-  .leaflet-container{font-family:inherit;}
-</style>
+
+    <!-- ========================================== -->
+    <!-- 1. META TAG SEO & IDENTITAS PLATFORM       -->
+    <!-- ========================================== -->
+    <title>Heritage Conserv-EWS | Museum & Situs Budaya</title>
+    <meta name="title" content="Heritage Conserv-EWS | Museum & Situs Budaya">
+    <meta name="description" content="Dashboard peringatan dini (Early Warning System) untuk mitigasi risiko iklim, cuaca ekstrem, dan gempa terhadap konservasi artefak museum dan situs cagar budaya.">
+    <meta name="keywords" content="konservasi museum, cagar budaya, IBF, early warning system, cuaca museum, mitigasi risiko artefak, heritage conservation">
+    <meta name="author" content="Konservator & Kurator Digital">
+    <meta name="robots" content="index, follow">
+  
+    <!-- ========================================== -->
+    <!-- 2. FAVICON (SVG DATA URI - HIGH RESOLUTION)-->
+    <!-- ========================================== -->
+    <!-- Panggil Manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Konfigurasi Tema & Standar PWA -->
+    <meta name="theme-color" content="#92400e">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Konfigurasi Khusus Apple / iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Heritage EWS">
+    <link rel="apple-touch-icon" href="192.png">
+    
+    <!-- Favicon Standar -->
+    <link rel="icon" type="image/png" sizes="192x192" href="192.png">
+
+    <!-- ========================================== -->
+    <!-- 3. OPEN GRAPH (FACEBOOK, LINKEDIN, WA)     -->
+    <!-- ========================================== -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://website-museum-anda.com/">
+    <meta property="og:title" content="Pantau Risiko Cagar Budaya Anda | Conserv-EWS">
+    <meta property="og:description" content="Ketahui ancaman cuaca, gempa, dan kelembaban udara yang dapat merusak artefak museum dan candi secara real-time.">
+    <!-- Di sinilah screenshot Anda dipanggil untuk thumbnail -->
+    <meta property="og:image" content="screenshot.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- ========================================== -->
+    <!-- 4. TWITTER CARDS (X PREVIEW)               -->
+    <!-- ========================================== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://website-museum-anda.com/">
+    <meta name="twitter:title" content="Dashboard Conserv-EWS | Perlindungan Artefak">
+    <meta name="twitter:description" content="Monitoring indikator UV, Mold Index, PM2.5, dan cuaca ekstrem untuk konservasi Cagar Budaya dan Museum.">
+    <!-- Di sinilah screenshot Anda dipanggil untuk thumbnail -->
+    <meta name="twitter:image" content="screenshot.jpg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+  <style>
+    body{font-family:'Plus Jakarta Sans',sans-serif;background-color:#f8fafc;}
+    ::-webkit-scrollbar{width:6px;height:6px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;}
+    ::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+    .loader-spinner{border:3px solid #f3f3f3;border-top:3px solid #b45309;border-radius:50%;width:26px;height:26px;animation:spin 1s linear infinite;}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    .picking-mode{cursor:crosshair!important;}
+    .tab-active{color:#b45309;border-color:#b45309;}
+    .mtab-active{color:#b45309;background:#fffbeb;}
+    .fade-in{animation:fade .35s ease;}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .leaflet-container{font-family:inherit;}
+  </style>
+
 </head>
+
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
 <!-- NAVBAR -->
 <nav class="bg-slate-900 text-white px-3 py-2.5 shrink-0 flex justify-between items-center shadow-lg z-30 border-b border-amber-600/30">
+
   <div class="flex items-center gap-2.5 pl-1">
     <div class="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center"><i class="fa-solid fa-building-columns"></i></div>
     <div>
@@ -39,6 +93,7 @@
       <p class="text-[10px] text-slate-400 mt-0.5">Cultural & Museum Conservation</p>
     </div>
   </div>
+
   <div class="flex gap-2">
     <button onclick="openModal('modal-settings')" title="API Settings" class="bg-slate-700 hover:bg-slate-600 w-8 h-8 rounded-lg text-xs transition flex items-center justify-center"><i class="fa-solid fa-gear"></i></button>
     <button onclick="loadSampleData()" class="bg-amber-700 hover:bg-amber-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2"><i class="fa-solid fa-bolt"></i><span class="hidden sm:inline">Sample Sites</span></button>
@@ -648,5 +703,23 @@ window.addEventListener('resize',()=>{if(window.innerWidth>=768){document.getEle
 
 document.addEventListener('DOMContentLoaded',()=>{initMap();loadSettings();loadDb();});
 </script>
+
+  <!-- Pendaftaran Service Worker (PWA) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            // Tunggu sampai seluruh halaman selesai dimuat agar tidak memberatkan loading awal
+            window.addEventListener('load', () => {
+                // Pastikan path ini sesuai dengan nama repository GitHub Anda
+                navigator.serviceWorker.register('/OurHeritage/sw.js')
+                    .then((registration) => {
+                        console.log('✅ ServiceWorker berhasil jalan. Scope:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('❌ ServiceWorker gagal didaftarkan:', error);
+                    });
+            });
+        }
+    </script>
+
 </body>
 </html>
