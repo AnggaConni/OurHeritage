@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heritage-ews-v1';
+const CACHE_NAME = 'heritage-ews-v2';
 
 // Daftar aset inti yang akan disimpan ke memori HP/Desktop (Cache)
 const ASSETS_TO_CACHE = [
