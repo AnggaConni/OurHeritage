@@ -1,59 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <!-- ========================================== -->
-    <!-- 1. META TAG SEO & IDENTITAS PLATFORM       -->
-    <!-- ========================================== -->
-    <title>Heritage Conserv-EWS | Museum & Situs Budaya</title>
-    <meta name="title" content="Heritage Conserv-EWS | Museum & Situs Budaya">
-    <meta name="description" content="Dashboard peringatan dini (Early Warning System) untuk mitigasi risiko iklim, cuaca ekstrem, dan gempa terhadap konservasi artefak museum dan situs cagar budaya.">
-    <meta name="keywords" content="konservasi museum, cagar budaya, IBF, early warning system, cuaca museum, mitigasi risiko artefak, heritage conservation">
-    <meta name="author" content="Konservator & Kurator Digital">
-    <meta name="robots" content="index, follow">
-  
-    <!-- ========================================== -->
-    <!-- 2. FAVICON (SVG DATA URI - HIGH RESOLUTION)-->
-    <!-- ========================================== -->
-    <!-- Panggil Manifest PWA -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- ========================================= -->
+    <!-- SEO -->
+    <!-- ========================================= -->
+
+    <title>OurHeritage | Heritage Conserv-EWS – Cultural Heritage Early Warning System</title>
+
+    <meta name="title" content="OurHeritage | Heritage Conserv-EWS – Cultural Heritage Early Warning System">
+    <meta name="description" content="An Early Warning System (EWS) for museums, cultural heritage sites, and World Heritage conservation. Monitor environmental risks, climate hazards, earthquakes, humidity, and air quality to support preventive conservation and disaster preparedness.">
+    <meta name="keywords" content="Heritage EWS, museum monitoring, cultural heritage, World Heritage, UNESCO, preventive conservation, museum dashboard, early warning system, humidity monitoring, climate risk, earthquake monitoring, museum IoT, heritage conservation">
+    <meta name="author" content="Angga Saputra">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://anggaconni.github.io/OurHeritage/">
+
+    <!-- ========================================= -->
+    <!-- PWA -->
+    <!-- ========================================= -->
+
     <link rel="manifest" href="manifest.json">
-
-    <!-- Konfigurasi Tema & Standar PWA -->
     <meta name="theme-color" content="#92400e">
     <meta name="mobile-web-app-capable" content="yes">
-
-    <!-- Konfigurasi Khusus Apple / iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Heritage EWS">
-    <link rel="apple-touch-icon" href="192.png">
-    
-    <!-- Favicon Standar -->
+    <meta name="apple-mobile-web-app-title" content="OurHeritage">
+    <link rel="apple-touch-icon" sizes="192x192" href="192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="512.png">
 
-    <!-- ========================================== -->
-    <!-- 3. OPEN GRAPH (FACEBOOK, LINKEDIN, WA)     -->
-    <!-- ========================================== -->
+    <!-- ========================================= -->
+    <!-- OPEN GRAPH -->
+    <!-- ========================================= -->
+
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="OurHeritage">
+    <meta property="og:locale" content="en_US">
     <meta property="og:url" content="https://anggaconni.github.io/OurHeritage/">
-    <meta property="og:title" content="Pantau Risiko Cagar Budaya Anda | Conserv-EWS">
-    <meta property="og:description" content="Ketahui ancaman cuaca, gempa, dan kelembaban udara yang dapat merusak artefak museum dan candi secara real-time.">
-    <!-- Di sinilah screenshot Anda dipanggil untuk thumbnail -->
-    <meta property="og:image" content="screenshot.jpg">
+    <meta property="og:title" content="OurHeritage | Heritage Conserv-EWS">
+    <meta property="og:description" content="A smart Early Warning System for museums and cultural heritage sites. Monitor environmental conditions, climate hazards, earthquakes, humidity, PM2.5, mold risk, and preventive conservation indicators in one dashboard.">
+    <meta property="og:image" content="https://anggaconni.github.io/OurHeritage/screenshot.jpg">
+    <meta property="og:image:secure_url" content="https://anggaconni.github.io/OurHeritage/screenshot.jpg">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="OurHeritage - Heritage Conserv-EWS Dashboard">
 
-    <!-- ========================================== -->
-    <!-- 4. TWITTER CARDS (X PREVIEW)               -->
-    <!-- ========================================== -->
+    <!-- ========================================= -->
+    <!-- TWITTER / X -->
+    <!-- ========================================= -->
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://anggaconni.github.io/OurHeritage/">
-    <meta name="twitter:title" content="Dashboard Conserv-EWS | Perlindungan Artefak">
-    <meta name="twitter:description" content="Monitoring indikator UV, Mold Index, PM2.5, dan cuaca ekstrem untuk konservasi Cagar Budaya dan Museum.">
-    <!-- Di sinilah screenshot Anda dipanggil untuk thumbnail -->
-    <meta name="twitter:image" content="screenshot.jpg">
+    <meta name="twitter:title" content="OurHeritage | Heritage Conserv-EWS">
+    <meta name="twitter:description" content="Smart dashboard for museums and heritage conservation with weather, humidity, earthquakes, air quality, mold risk, and preventive conservation indicators.">
+    <meta name="twitter:image" content="https://anggaconni.github.io/OurHeritage/screenshot.jpg">
+    <meta name="twitter:image:alt" content="OurHeritage Dashboard">
+
+    <!-- ========================================= -->
+    <!-- OPTIONAL -->
+    <!-- ========================================= -->
+
+    <meta name="application-name" content="OurHeritage">
+    <meta name="apple-mobile-web-app-title" content="OurHeritage">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
