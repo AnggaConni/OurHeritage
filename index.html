@@ -845,6 +845,47 @@ function clearData() {
   }
 }
 
+/* ---------- OFFLINE / ONLINE DETECTOR ---------- */
+const createOfflineBanner = () => {
+    const banner = document.createElement('div');
+    banner.id = 'offline-banner';
+    banner.className = 'fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-4 py-2 rounded-full text-[11px] font-bold shadow-lg z-[9999] flex items-center gap-2 transition-all duration-500 translate-y-20 opacity-0';
+    banner.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline Mode: Showing cached data';
+    document.body.appendChild(banner);
+    return banner;
+};
+
+const banner = createOfflineBanner();
+
+// Jika internet mati
+window.addEventListener('offline', () => {
+    banner.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline Mode: Showing cached data';
+    banner.classList.remove('bg-emerald-600', 'translate-y-20', 'opacity-0');
+    banner.classList.add('bg-amber-600');
+});
+
+// Jika internet kembali menyala
+window.addEventListener('online', () => {
+    banner.innerHTML = '<i class="fa-solid fa-wifi"></i> Connection restored. Refreshing data...';
+    banner.classList.remove('bg-amber-600');
+    banner.classList.add('bg-emerald-600');
+    
+    // Sembunyikan banner setelah 3 detik
+    setTimeout(() => {
+        banner.classList.add('translate-y-20', 'opacity-0');
+    }, 3000);
+
+    // Auto-refresh data API jika sedang membuka sebuah museum
+    if (currentSiteId) {
+        processSiteData(currentSiteId);
+    }
+});
+
+// Cek status saat pertama kali load
+if (!navigator.onLine) {
+    window.dispatchEvent(new Event('offline'));
+}
+
 </script>
 
   <!-- Pendaftaran Service Worker (PWA) -->
