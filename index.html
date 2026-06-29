@@ -314,12 +314,23 @@
 <!-- MODAL SETTINGS -->
 <div id="modal-settings" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
   <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
-    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-slate-800"><i class="fa-solid fa-gear mr-1"></i> API Settings</h3><button onclick="closeModal('modal-settings')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-slate-800"><i class="fa-solid fa-gear mr-1"></i> API Settings & Data</h3><button onclick="closeModal('modal-settings')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="p-5 text-sm space-y-4">
       <p class="text-[11px] text-slate-500">Open-Meteo, USGS, Flood (GloFAS) & NASA POWER work out-of-the-box. The keys below are optional for richer fire & air data.</p>
       <div><label class="block font-semibold text-slate-700 mb-1 text-xs">NASA FIRMS Map Key <span class="text-slate-400 font-normal">(fire hotspots)</span></label><input type="text" id="set-firms" class="w-full border rounded-lg p-2 text-xs" placeholder="firms.modaps.eosdis.nasa.gov/api/map_key"></div>
       <div><label class="block font-semibold text-slate-700 mb-1 text-xs">OpenAQ API Key <span class="text-slate-400 font-normal">(optional)</span></label><input type="text" id="set-openaq" class="w-full border rounded-lg p-2 text-xs" placeholder="optional"></div>
       <button onclick="saveSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-lg">Save Keys</button>
+      
+      <hr class="border-slate-200 my-1">
+      <h4 class="font-bold text-slate-800 text-xs">Database Management</h4>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="exportData()" class="bg-sky-100 hover:bg-sky-200 text-sky-700 font-semibold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition"><i class="fa-solid fa-download"></i> Backup (JSON)</button>
+        <button onclick="document.getElementById('import-file').click()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-semibold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition"><i class="fa-solid fa-upload"></i> Load (JSON)</button>
+      </div>
+      <button onclick="clearData()" class="w-full bg-rose-100 hover:bg-rose-200 text-rose-700 font-semibold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition"><i class="fa-solid fa-trash"></i> Clear All Data</button>
+      
+      <!-- Input file sembunyi untuk Load JSON -->
+      <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
     </div>
   </div>
 </div>
@@ -572,24 +583,71 @@ function moldIndex(RH,T){
 }
 
 /* ---------- ACTIONS ---------- */
-function generateActions(s){
-  const acts=[];const RH=s.apiRH,T=s.apiTemp;const M=s.material;
-  const isMuseum=s.type==='Museum';
-  if(RH>75||(RH>65&&['Paper','Leather','Textile','Wood'].includes(M))){
-    if(s.capDehum) acts.push(['fa-power-off','high','Activate dehumidifiers in '+M+' storage — target RH 50–55%.']);
-    else acts.push(['fa-triangle-exclamation','high','URGENT: deploy portable dehumidifiers / silica gel; isolate affected gallery.']);
-    if(isMuseum) acts.push(['fa-door-closed','med','Close or limit visitor access to reduce humidity load from breath/perspiration.']);
+function generateActions(s) {
+  const acts = [];
+  const RH = s.apiRH, T = s.apiTemp, M = s.material;
+  const isMuseum = s.type === 'Museum';
+
+  // HIGH HUMIDITY
+  if (RH > 75 || (RH > 65 && ['Paper','Leather','Textile','Wood'].includes(M))) {
+    if (s.capDehum) {
+      acts.push(['fa-power-off', 'high', `<b>HOW TO REDUCE MOISTURE:</b><br>• Turn on ALL dehumidifier units in the room immediately — do not wait. Even a 30-minute delay at high humidity can begin warping wood or softening paper fibers.<br>• Set the target humidity dial to 50–55% RH. This is the internationally recommended safe zone for most heritage materials (ASHRAE 55 standard).<br>• Seal every door, window, and air gap with draught tape or rolled towels. Any breach allows warm, humid outside air to enter and overwhelm the dehumidifier's capacity.<br>• Check the dehumidifier's water collection tank every 2–3 hours and empty it before it reaches full capacity, as a full tank causes the unit to shut off automatically.<br>• Log the current RH reading and timestamp in the environment monitoring logbook for the conservation record.`]);
+    } else {
+      acts.push(['fa-triangle-exclamation', 'high', `<b>HOW TO PROTECT ${M.toUpperCase()} WITHOUT A DEHUMIDIFIER:</b><br>• Place activated silica gel packets (blue indicating type preferred) directly inside every display case and storage box. Use at least 200g of silica gel per 1 cubic meter of enclosed space.<br>• Check that all display case gaskets and door seals are fully intact — press a thin piece of paper against the seal; if it slides out easily, the seal is compromised and must be taped immediately.<br>• Keep all main room doors and windows shut. Post a sign asking staff to enter and exit swiftly and to never prop doors open.<br>• If silica gel packets have turned pink or clear, they are fully saturated and must be replaced or regenerated by oven-drying at 120°C for 1–2 hours before reuse.<br>• As a temporary measure, spread thin cotton cloths or acid-free tissue paper between stacked textiles or papers to absorb contact moisture and allow air circulation between layers.<br>• Monitor and log RH readings every 2 hours until conditions stabilize below 65% RH.`]);
+    }
+    if (isMuseum) acts.push(['fa-door-closed', 'med', `<b>HOW TO MANAGE VISITOR NUMBERS DURING HIGH HUMIDITY:</b><br>• Immediately restrict gallery entry to a maximum of 10–15 visitors per zone. Each adult exhales approximately 40g of water vapour per hour, rapidly raising RH inside enclosed spaces.<br>• Brief your front-desk staff to actively manage the queue — visitors must wait in the open-air foyer or lobby, not inside the gallery.<br>• Assign a staff member to stand at the gallery door: open it only momentarily for entry and exit, then close it firmly. Do not allow the door to be held open for extended periods.<br>• Display a polite notice at the entrance explaining that crowd limits are in place to protect the collection — most visitors will understand and cooperate.<br>• Consider temporarily closing the most humidity-sensitive gallery rooms (e.g., those with paper manuscripts or historical textiles) until RH drops below 65%.`]);
   }
-  if(moldIndex(RH,T).lvl==='crit') acts.push(['fa-bacterium','high','Mold alert: inspect & ventilate; quarantine items showing growth; reduce RH immediately.']);
-  if((T>=20&&T<=32&&RH>60)&&['Wood','Paper','Textile'].includes(M)) acts.push(['fa-bug','med','Deploy pest/termite traps; schedule entomological inspection of '+M+' items.']);
-  if(s.apiUV>5||isMuseum&&s.apiUV>2){ if(isMuseum) acts.push(['fa-lightbulb','med','Lower light intensity / fit UV filters; sensitive items below 50 lux.']); else acts.push(['fa-umbrella','med','Install protective canopy/shade over exposed reliefs to cut UV fading.']);}
-  if(s.apiPM25>50||s.apiDust>40){ if(isMuseum) acts.push(['fa-fan','med','Close ventilation intakes; activate fine-particulate filtration (HVAC).']); else acts.push(['fa-spray-can-sparkles','low','Schedule soft-brush dust removal after pollution episode.']);}
-  if(s.maxPrecip>50||s.floodLevel==='High'){ if(isMuseum) acts.push(['fa-arrow-up','high','Move artifacts to upper/elevated floors; deploy flood barriers at entrances.']); else acts.push(['fa-tarp','high','Cover key reliefs/statues with protective sheeting against driving rain.']); acts.push(['fa-water','med','Clear drainage channels around the site to prevent pooling/seepage.']);}
-  if(s.maxEQ>=4.5){ acts.push(['fa-helmet-safety','high','Seismic check: inspect structural cracks & keystone shift; evacuate visitors if needed.']); acts.push(['fa-link','med','Secure display mounts & seismic isolation for free-standing artifacts.']);}
-  if(s.firePoints>0){ acts.push(['fa-fire-extinguisher','high','Verify fire suppression readiness; clear surrounding vegetation; brief staff.']);}
-  if(s.type==='Cultural Site'&&['Stone'].includes(M)&&s.maxPrecip>20) acts.push(['fa-broom','low','Inspect for acid-rain etching & schedule biocide treatment for moss.']);
-  if(acts.length===0) acts.push(['fa-circle-check','ok','Conditions favorable — maintain routine monitoring & scheduled cleaning SOP.']);
-  s.actions=acts;
+
+  // MOLD OUTBREAK
+  if (moldIndex(RH, T).lvl === 'crit') {
+    acts.push(['fa-bacterium', 'high', `<b>HOW TO HANDLE CRITICAL MOLD RISK:</b><br>• Before touching anything, put on nitrile gloves, an N95 respirator mask, and if available, a disposable apron. Mold spores are a respiratory hazard and can transfer to other objects via skin contact.<br>• Systematically inspect each artifact and case using a UV flashlight (365nm) — active mold colonies fluoresce under UV, revealing growth not visible to the naked eye. Look for fuzzy white, grey, or black patches, as well as musty odours.<br>• Do NOT attempt to wipe or brush mold off artifacts on-site. Disturbing mold spreads thousands of airborne spores that will re-colonise nearby objects within hours.<br>• Any item showing signs of mold must be immediately isolated. Wrap it loosely in acid-free tissue (not plastic — plastic traps moisture and accelerates mold) and move it to a designated quarantine room with low humidity.<br>• In the quarantine room, stabilise the RH below 45% using a dehumidifier. At this level, mold growth halts completely. Do not attempt cleaning until RH has been below 45% for at least 24–48 hours.<br>• Photograph all affected items before any treatment for insurance and conservation records.<br>• Contact a professional conservator before applying any chemical treatments. Incorrect mold treatment can permanently stain or dissolve heritage materials.`]);
+  }
+
+  // PESTS & INSECTS
+  if ((T >= 20 && T <= 32 && RH > 60) && ['Wood','Paper','Textile'].includes(M)) {
+    acts.push(['fa-bug', 'med', `<b>HOW TO CHECK FOR AND PREVENT PEST INFESTATION:</b><br>• Conduct a structured Integrated Pest Management (IPM) inspection today. Current temperature and humidity conditions are optimal for woodborers, silverfish, and textile moths to breed and feed.<br>• Using a flashlight, methodically examine the underside of shelves, the dark rear corners of display cabinets, and the folds of stored textiles. Pay special attention to joints and cracks in wooden frames where insects like to nest.<br>• Identify the specific pest signs for your material:<br>&nbsp;&nbsp;— <i>Wood:</i> Look for fine, powdery "frass" (wood dust) below the object, or tiny round exit holes (1–2mm diameter) indicating active woodborers.<br>&nbsp;&nbsp;— <i>Paper:</i> Look for irregular surface grazing, tiny droppings resembling black pepper, or shed insect skins (silverfish).<br>&nbsp;&nbsp;— <i>Textile:</i> Look for irregular holes in fabric, larval casings (small cream-coloured tubes), or moth wings near folds.<br>• Place commercial sticky insect traps at the base of every storage cabinet and in each room corner. Mark the date on each trap and inspect them every 72 hours. Record catch counts — a sudden spike in numbers signals an active infestation.<br>• If live insects or larvae are confirmed, isolate the object in a sealed plastic bag and freeze it at -20°C for 72 hours (anoxic treatment) — this kills insects at all life stages without chemicals. Then move the object to quarantine.<br>• Remove all food, drinks, and organic waste from the collection areas immediately, as these are primary attractants.`]);
+  }
+
+  // UV / LIGHT DAMAGE
+  if (s.apiUV > 5 || (isMuseum && s.apiUV > 2)) {
+    if (isMuseum) acts.push(['fa-lightbulb', 'med', `<b>HOW TO PREVENT LIGHT AND UV FADING:</b><br>• Pull down all window blinds and draw curtains fully closed right now. Even 30 minutes of unfiltered UV exposure can cause irreversible fading to dyes and organic pigments in paintings, textiles, and manuscripts. UV damage is cumulative and permanent.<br>• Turn off any direct halogen or incandescent spotlights aimed at artifacts — these emit both UV and infrared (heat) radiation which bleaches colours and desiccates organic materials.<br>• Switch to low-UV, warm-white LED lighting (2700–3000K) set to a maximum illuminance of 50 lux for sensitive materials (paper, textile, watercolours) or 150–200 lux for stable materials (oil paintings, ceramics).<br>• If window film (UV-filtering film) is not already installed on the gallery windows, this should be flagged as a priority capital maintenance item — it blocks up to 99% of UV while maintaining natural light and costs relatively little.<br>• For the most light-sensitive objects (e.g., historical photographs, feather or shell ornaments), cover them with acid-free tissue or a dark cloth when not being actively viewed by visitors.<br>• Log today's UV index reading and the corrective actions taken in the facility's environmental monitoring record.`]);
+    else acts.push(['fa-umbrella', 'med', `<b>HOW TO PROTECT STONE MONUMENTS FROM INTENSE SUNLIGHT:</b><br>• Erect temporary shade structures (heavy canvas or polyethylene tarps, minimum 200 GSM) over the most vulnerable carved or decorated stone surfaces. Focus first on relief carvings and inscriptions, as these have the greatest surface area exposed to direct solar radiation.<br>• Critical: ensure a gap of at least 30–50cm between the tarp and the stone surface. Direct contact traps heat and moisture underneath, accelerating biological growth and thermal stress.<br>• Secure tarp tie-downs to solid anchor points, not to the monument itself — rope pressure on ancient stone can cause surface spalling.<br>• Understand the damage mechanism: stone expands when heated and contracts when cooled. On high-UV days with rapid temperature swings, this thermal cycling creates micro-fractures in the stone matrix that widen over years, eventually causing flaking or structural failure.<br>• If shading is not feasible for large structures, prioritise spraying clean water on the stone surface during peak UV hours (10:00–14:00) to evaporatively cool it and reduce thermal stress — use a fine mist sprayer, not a pressure jet.<br>• Flag highly-exposed sections for priority conservation assessment at the next scheduled site inspection.`]);
+  }
+
+  // AIR POLLUTION / DUST
+  if (s.apiPM25 > 50 || s.apiDust > 40) {
+    if (isMuseum) acts.push(['fa-fan', 'med', `<b>HOW TO MAINTAIN AIR QUALITY DURING HIGH POLLUTION:</b><br>• Close all external windows, doors, and mechanical ventilation inlets immediately. At PM2.5 above 50 µg/m³ (WHO Hazardous threshold), fine particulate matter will deposit on artifact surfaces and embed in porous materials like textiles and paper, causing irreversible soiling and chemical degradation.<br>• Activate all HEPA air purifiers inside the gallery. Position units near the center of the room for maximum circulation. HEPA filters capture 99.97% of particles ≥0.3 microns including most fine dust, soot, and biological particles.<br>• Do NOT open any display cases while external pollution levels are elevated — even brief opening allows polluted air to enter the sealed microenvironment of the case.<br>• If the HVAC system has activated carbon filters, now is the time to ensure they are running — these capture gaseous pollutants (SO₂, NO₂) that cause acid degradation of paper and metals.<br>• Post a brief notice at the museum entrance informing visitors of temporary ventilation restrictions. Offer water to visitors showing signs of respiratory discomfort.<br>• Check and record current PM2.5 readings every hour. Do not re-open ventilation until outdoor PM2.5 drops below 35 µg/m³ (WHO moderate threshold) for at least one hour consecutively.`]);
+    else acts.push(['fa-spray-can-sparkles', 'low', `<b>HOW TO CLEAN ASH AND DUST FROM STONE MONUMENTS SAFELY:</b><br>• Before any cleaning, wait for wind, smoke, and active dust events to completely stop. Cleaning during active deposition is counterproductive and abrasive particles carried by wind can act as a sandblast on delicate carvings.<br>• Wear an N95 mask and gloves before starting — volcanic ash in particular contains fine silica crystals that are a serious respiratory hazard.<br>• Use only a natural-bristle, soft-density brush (such as a Japanese hake brush or a wide watercolour brush). Never use wire brushes, abrasive pads, or high-pressure water, as these physically remove the weathered surface patina of stone that took centuries to form.<br>• Work from top to bottom on the monument surface, sweeping ash downward and away from decorated areas. This prevents loose debris from re-settling on cleaned sections.<br>• Avoid water for basic ash removal — water mixed with volcanic ash or industrial dust can form a thin acidic or alkaline paste that etches stone. Use only dry brushing unless a professional conservator specifically advises wet cleaning.<br>• If heavy soot or oily particulate deposits are present (e.g., from nearby fire smoke), this is a specialist conservation task — photograph the soiling and consult a stone conservator before attempting any cleaning.`]);
+  }
+
+  // HEAVY RAIN / FLOOD
+  if (s.maxPrecip > 50 || s.floodLevel === 'High') {
+    if (isMuseum) acts.push(['fa-arrow-up', 'high', `<b>HOW TO DEFEND THE COLLECTION AGAINST FLOODING:</b><br>• Begin moving objects from ground-floor displays and storage NOW — do not wait for water to appear at the door. By the time flooding is visible inside the building, the window for safe object movement may already be closing.<br>• Prioritise objects in this order: (1) irreplaceable/unique items with no copies, (2) organics — paper, textile, leather, wood — which suffer catastrophic and rapid damage from water, (3) metals that corrode, (4) stone and ceramics (most robust).<br>• Move objects to upper floors or, if single-storey, to the highest shelves (minimum 60cm above estimated flood level). Place objects on pallets or raised platforms, never directly on the floor.<br>• Disconnect and elevate all electrical cables, extension cords, and equipment plugs on ground-floor level. Submerged electrical systems pose electrocution risk and can cause short-circuit fires even in flooded conditions.<br>• Place sandbags or commercial water-gate barriers tightly against all exterior door thresholds. Ensure barriers extend to the full width of the door frame with no gaps at the sides.<br>• Photograph the current state of all collection areas before and after any emergency moves — this is critical for insurance documentation and future conservation assessment.<br>• Assign a "flood monitor" — a staff member tasked solely with observing water entry points and reporting every 20 minutes.`]);
+    else acts.push(['fa-tarp', 'high', `<b>HOW TO PROTECT OUTDOOR MONUMENTS FROM FLOOD AND HEAVY RAIN:</b><br>• Cover highly decorated, inscribed, or structurally vulnerable monument sections with heavy-duty polyethylene tarps (minimum 200 GSM, UV-stabilised). Prioritise surfaces with fine relief carvings, mortar joints, or visible existing cracks, as water infiltration into cracks causes freeze-thaw and pressure damage.<br>• Secure tarps with non-abrasive straps (padded webbing or soft rope) anchored to ground stakes — never tie directly to the monument stonework. Use ballast weights on tarp edges if stakes are not feasible.<br>• Ensure tarps shed water away from the monument base, not toward it — water pooling at the foundation is a primary cause of structural undermining and soil erosion around monument footings.<br>• Inspect all access pathways around the site. Flooded or waterlogged paths create visitor safety hazards — temporarily close vulnerable zones and post physical barriers.<br>• Clear all drainage channels, culverts, and surface drains within 20 metres of the monument of leaf litter, mud, and debris. A blocked drain during heavy rain can redirect water toward the monument base within minutes.<br>• After the rain event, photograph all water marks, erosion channels, and any new surface damage as part of the monitoring record.`]);
+    acts.push(['fa-water', 'med', `<b>HOW TO PREVENT WATER POOLING AND DRAINAGE FAILURE:</b><br>• Immediately inspect all roof gutters and downpipes for blockages (leaves, bird nests, accumulated debris). A blocked gutter during heavy rain overflows onto walls, causing water penetration and staining — clear them using a hooked rod or gloved hand while wearing non-slip footwear on a stable ladder.<br>• Inspect every surface drain, gully trap, and drain channel within the building perimeter. Use a stick to probe and clear mud, leaves, and silt. A single blocked gully can cause localised flooding of an entire courtyard within minutes during a downpour.<br>• Check that drain channels slope consistently away from the building. If standing water is already visible in the courtyard, create temporary channels using sandbags to direct flow toward the nearest open drain.<br>• After the event, document any areas of persistent pooling on a site plan — these are priority locations for permanent drainage improvement works.<br>• If the basement or underground storage areas are at risk, check sump pumps are operational and activated.`]);
+  }
+
+  // EARTHQUAKE
+  if (s.maxEQ >= 4.5) {
+    acts.push(['fa-helmet-safety', 'high', `<b>POST-EARTHQUAKE SAFETY AND COLLECTION PROCEDURE:</b><br>• Your first and non-negotiable priority is human safety. Immediately but calmly guide all visitors and staff out of the building using the nearest safe exit — speak clearly and walk with visitors, do not run or create panic. Do not use elevators.<br>• Once all persons are evacuated and accounted for at the designated muster point, assign a trained staff member with a hard hat and flashlight to conduct a rapid structural inspection before anyone re-enters. Look for: new cracks in load-bearing walls or pillars, broken glass, hanging ceiling sections, and displaced structural beams. Do not re-enter if any of these are observed — contact your structural safety authority first.<br>• If the building is confirmed structurally safe, re-enter to assess collection damage. Begin with a visual check from the doorway of each room — identify any objects that have fallen, shifted, or are visibly unstable before approaching.<br>• Do NOT attempt to straighten or reposition tilting objects without proper support equipment. A leaning artifact may be balanced precariously and can fall and shatter if touched without correct support in place.<br>• Photograph all damage systematically before any object is moved — this is mandatory for insurance claims and conservation documentation.<br>• Check that all display case restraint systems (museum wax, brackets, foam supports) are still effective. Re-apply museum wax to any objects that have shifted on their mounts.<br>• Issue a precautionary notice to visitors that the facility is temporarily closed pending post-earthquake safety assessment.`]);
+  }
+
+  // FIRE
+  if (s.firePoints > 0) {
+    acts.push(['fa-fire-extinguisher', 'high', `<b>FIRE PREVENTION AND EMERGENCY PROTOCOL:</b><br>• Alert ALL facility staff immediately via radio or phone — provide the confirmed number of fire hotspot locations and their direction relative to the building. Do not rely on a single communication channel; use backup methods (PA system, physical walk-around) to ensure every staff member is informed.<br>• Identify and brief the designated Fire Warden for each zone of the building. Wardens are responsible for supervising evacuation routes and conducting a headcount at the muster point — confirm these assignments now.<br>• Position portable fire extinguishers (CO₂ type for collections — never water or foam on paper, textile, or electronics) at the primary entry points to each gallery or collection room. Ensure all staff know their locations and have been trained in basic use (PASS: Pull, Aim, Squeeze, Sweep).<br>• Clear a 5-metre perimeter around the building exterior of all dry vegetation, fallen leaves, cardboard, and combustible materials. Fire spreads fastest through dry organic ground cover.<br>• Close all fire doors in the building. Fire doors are rated to contain a fire for 30–60 minutes, providing critical time for evacuation and suppression. Propped-open fire doors are a serious life and collection safety failure.<br>• Ensure the building's fire suppression systems (sprinklers, alarm panels) are fully armed and that the alarm company has been notified of the elevated fire risk in the area.<br>• If fire approaches within 500 metres of the facility, begin controlled emergency evacuation of the highest-priority collection items using a pre-prepared priority list — do not improvise object selection during an emergency.`]);
+  }
+  
+  // MOSS (STONE ONLY)
+  if (s.type === 'Cultural Site' && ['Stone'].includes(M) && s.maxPrecip > 20) {
+    acts.push(['fa-broom', 'low', `<b>HOW TO PREVENT AND MANAGE MOSS AND ALGAE GROWTH:</b><br>• Conduct a targeted inspection of the north-facing, permanently shaded, and low-lying sections of all stone structures — these are where biological growth (moss, algae, lichen, and biofilm) establishes first due to persistent moisture and low light, which inhibit natural drying.<br>• Clearly distinguish between growth types before taking any action:<br>&nbsp;&nbsp;— <i>Green algae/biofilm:</i> Thin, slimy green coating, earliest stage — easiest to remove.<br>&nbsp;&nbsp;— <i>Moss:</i> Thick, fibrous green cushions — their root-like rhizoids penetrate stone joints and accelerate weathering.<br>&nbsp;&nbsp;— <i>Lichen:</i> Grey, orange, or black crusty patches bonded chemically to stone — requires specialist removal and must NOT be scraped with hard tools as it damages the stone surface beneath.<br>• For algae and moss (not lichen), use a natural-fibre brush (not wire or nylon) with a gentle circular motion on dry stone. Work from the top downward to prevent recontamination of cleaned areas.<br>• Do not use household bleach or acidic cleaners — these kill surface growth but leave chemical residues in the stone pores that damage the mineral structure and can cause long-term discolouration.<br>• After mechanical removal, allow the stone to dry fully, then apply a professional biocide product approved for heritage stone (e.g., Preventol or Biotin R) by brush or low-pressure spray to inhibit re-growth for 6–12 months.<br>• Ensure surface drainage channels around the monument base are clear so rainwater drains away rather than pooling at the stone — standing water at the base is the primary driver of biological colonisation.<br>• Photograph the extent of biological growth before and after treatment and add to the monument's condition monitoring record.`]);
+  }
+
+  // ALL CLEAR
+  if (acts.length === 0) {
+    acts.push(['fa-circle-check', 'ok', `<b>CONDITIONS STABLE — ROUTINE MAINTENANCE CHECKLIST:</b><br>• Environmental conditions are currently within safe parameters for the collection. Use this opportunity to carry out proactive routine tasks that protect the collection long-term.<br>• <i>Morning walkthrough:</i> Inspect all galleries and storage rooms visually for any signs of overnight changes — drips from ceiling, insects on sticky traps, shifted objects, unusual odours (mold has a characteristic musty smell detectable before visible growth appears).<br>• <i>Condition monitoring:</i> Record the current temperature, RH, and light levels in the environmental logbook. Consistent record-keeping is the foundation of preventive conservation — it allows you to identify trends before they become problems.<br>• <i>Housekeeping:</i> Dust accessible surfaces using a soft microfibre cloth or a conservation-approved HEPA vacuum with a soft brush attachment. Work systematically room by room. Never use aerosol sprays or furniture polish near artifacts.<br>• <i>Equipment check:</i> Verify that all dehumidifiers, air purifiers, and data loggers are operational, reading correctly, and that collection tanks/filters are not due for emptying or replacement.<br>• <i>Collection survey:</i> Conduct a routine visual check of each object on display — look for any new damage, surface changes, or altered appearance. Document and photograph anything of concern.<br>• <i>Visitor readiness:</i> Confirm that all emergency exits, fire extinguishers, and first-aid kits are accessible and in good condition before opening to visitors.`]);
+  }
+
+  s.actions = acts;
 }
 
 /* ---------- RENDER ---------- */
@@ -644,7 +702,7 @@ function renderDashboard(s){
   s.actions.forEach(a=>{
     const pri=a[1];const pc=pri==='high'?'border-rose-200 bg-rose-50':pri==='med'?'border-amber-200 bg-amber-50':pri==='ok'?'border-emerald-200 bg-emerald-50':'border-slate-200 bg-white';
     const ic2=pri==='high'?'text-rose-600':pri==='med'?'text-amber-600':pri==='ok'?'text-emerald-600':'text-slate-600';
-    const tag=pri==='high'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-600 text-white">PRIORITY</span>':pri==='med'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white">ADVISED</span>':'';
+    const tag=pri==='high'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-600 text-white">URGENT</span>':pri==='med'?'<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white">RECOMMENDED</span>':'';
     al.innerHTML+=`<div class="rounded-xl border ${pc} p-3.5 flex gap-3 items-start shadow-sm"><i class="fa-solid ${a[0]} ${ic2} text-lg mt-0.5 w-5 text-center"></i><div class="flex-1"><div class="flex justify-between items-center mb-0.5">${tag}</div><p class="text-xs text-slate-700 leading-relaxed">${a[2]}</p></div></div>`;
   });
 
@@ -652,23 +710,29 @@ function renderDashboard(s){
   renderChart(s);
 }
 
-function renderAlert(s){
-  const box=document.getElementById('ibf-alert');
-  if(s.riskLevel==='HIGH'){
-    box.className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm flex gap-3 items-start";
-    box.innerHTML=`<div class="bg-rose-100 text-rose-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
-      <div><h3 class="font-bold text-rose-800 text-sm mb-0.5">CONSERVATION ALERT — Anticipatory Action Required</h3>
-      <p class="text-xs text-rose-700 leading-relaxed">Critical degradation pressure on <b>${s.material}</b> (RH ${s.apiRH}%, risk ${s.riskScore}%). Open the <b>Actions</b> tab for the protective SOP checklist.</p></div>`;
-  }else if(s.riskLevel==='MEDIUM'){
-    box.className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm flex gap-3 items-start";
-    box.innerHTML=`<div class="bg-amber-100 text-amber-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-circle-exclamation text-lg"></i></div>
-      <div><h3 class="font-bold text-amber-800 text-sm mb-0.5">ELEVATED RISK — Heightened Monitoring</h3>
-      <p class="text-xs text-amber-700 leading-relaxed">Environmental stressors are above baseline for <b>${s.material}</b>. Review preventive measures in the Actions tab.</p></div>`;
-  }else{
-    box.className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex gap-3 items-start";
-    box.innerHTML=`<div class="bg-emerald-100 text-emerald-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-check-double text-lg"></i></div>
-      <div><h3 class="font-bold text-emerald-800 text-sm mb-0.5">CONDITIONS FAVORABLE</h3>
-      <p class="text-xs text-emerald-700 leading-relaxed">Microclimate is within safe range for <b>${s.material}</b>. Continue routine monitoring & cleaning SOP.</p></div>`;
+function renderAlert(s) {
+  const box = document.getElementById('ibf-alert');
+  
+  // If risk score is high
+  if (s.riskLevel === 'HIGH') {
+    box.className = "mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML = `<div class="bg-rose-100 text-rose-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+      <div><h3 class="font-bold text-rose-800 text-sm mb-0.5">CRITICAL ALERT — Immediate Action Required!</h3>
+      <p class="text-xs text-rose-700 leading-relaxed">Current weather conditions pose a <b>severe and active threat</b> to your <b>${s.material}</b> collection, with a calculated damage risk of <b>${s.riskScore}%</b>. At this level, irreversible deterioration — warping, mold outbreak, structural failure, or permanent staining — can begin within hours if no action is taken. Do not delay. Open the <b>Actions</b> tab immediately and work through the step-by-step emergency response instructions from the top, prioritising any items marked <b>HIGH</b> first.</p></div>`;
+  
+  // If risk score is medium OR if there is any URGENT action required despite a low score
+  } else if (s.riskLevel === 'MEDIUM' || s.actions.some(a => a[1] === 'high')) {
+    box.className = "mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML = `<div class="bg-amber-100 text-amber-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-circle-exclamation text-lg"></i></div>
+      <div><h3 class="font-bold text-amber-800 text-sm mb-0.5">ELEVATED RISK — Preventive Steps Needed</h3>
+      <p class="text-xs text-amber-700 leading-relaxed">One or more environmental factors — such as rising humidity, UV exposure, or nearby pest conditions — are currently <b>outside the safe threshold</b> for <b>${s.material}</b> items. While damage is not yet occurring, conditions are deteriorating and require <b>prompt preventive action today</b>. Delaying response at this stage is the most common cause of collections reaching a critical state. Review the targeted "How-To" guides in the <b>Actions</b> tab and complete the recommended steps before conditions worsen.</p></div>`;
+  
+  // Truly safe condition
+  } else {
+    box.className = "mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex gap-3 items-start";
+    box.innerHTML = `<div class="bg-emerald-100 text-emerald-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-check-double text-lg"></i></div>
+      <div><h3 class="font-bold text-emerald-800 text-sm mb-0.5">SAFE — Conditions Stable</h3>
+      <p class="text-xs text-emerald-700 leading-relaxed">All monitored environmental parameters — temperature, humidity, UV, and air quality — are currently <b>within the safe conservation range</b> for your <b>${s.material}</b> collection. This is the right moment to carry out proactive routine maintenance: regular upkeep done during stable conditions is what prevents emergencies from developing. Open the <b>Actions</b> tab for today's recommended daily checklist, including housekeeping, equipment checks, and collection condition monitoring.</p></div>`;
   }
 }
 
@@ -717,6 +781,70 @@ function renderChart(s){
 window.addEventListener('resize',()=>{if(window.innerWidth>=768){document.getElementById('dash-panel').classList.remove('hidden');document.getElementById('map-container').classList.remove('hidden');}else{mobileView(document.getElementById('mtab-dash').classList.contains('mtab-active')?'dash':'map');}});
 
 document.addEventListener('DOMContentLoaded',()=>{initMap();loadSettings();loadDb();});
+
+/* ---------- DATA MANAGEMENT (BACKUP/RESTORE) ---------- */
+function exportData() {
+  const data = { db: db, settings: settings };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Heritage_EWS_Backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    try {
+      const parsed = JSON.parse(event.target.result);
+      if (parsed.db && parsed.db.sites) {
+        db = parsed.db;
+        saveDb();
+        if (parsed.settings) {
+          settings = parsed.settings;
+          localStorage.setItem('heritage_settings', JSON.stringify(settings));
+          loadSettings();
+        }
+        renderMapMarkers();
+        closeModal('modal-settings');
+        document.getElementById('welcome-state').classList.remove('hidden');
+        document.getElementById('dashboard-content').classList.add('hidden');
+        if (window.innerWidth < 768) mobileView('map');
+        alert("Data successfully loaded!");
+      } else {
+        alert("Invalid JSON format. Cannot load data.");
+      }
+    } catch (err) {
+      alert("Error reading JSON file.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // Reset input agar bisa meload file yang sama lagi jika perlu
+}
+
+function clearData() {
+  if (confirm("Are you sure you want to delete ALL sites and settings? This cannot be undone.")) {
+    db.sites = [];
+    saveDb();
+    settings = { firms: '', openaq: '' };
+    localStorage.removeItem('heritage_settings');
+    loadSettings();
+    renderMapMarkers();
+    closeModal('modal-settings');
+    
+    // Kembalikan layar ke tampilan Welcome
+    document.getElementById('welcome-state').classList.remove('hidden');
+    document.getElementById('dashboard-content').classList.add('hidden');
+    if (window.innerWidth < 768) mobileView('map');
+    
+    alert("All data has been cleared.");
+  }
+}
+
 </script>
 
   <!-- Pendaftaran Service Worker (PWA) -->
