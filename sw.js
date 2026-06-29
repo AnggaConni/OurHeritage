@@ -4,7 +4,6 @@ const CACHE_NAME = 'heritage-ews-v2';
 const ASSETS_TO_CACHE = [
     '/OurHeritage/',
     '/OurHeritage/index.html',
-    '/OurHeritage/manifest.json',
     '/OurHeritage/screenshot.jpg',
     '/OurHeritage/192.png',  // <-- Tambahkan ini
     '/OurHeritage/512.png'   // <-- Tambahkan ini
