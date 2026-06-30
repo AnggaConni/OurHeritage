@@ -368,12 +368,27 @@
         <div><label class="block font-semibold text-slate-700 mb-1">Site Name</label><input type="text" id="s-name" required class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-amber-500 outline-none"></div>
         <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <div class="flex justify-between items-end mb-2"><label class="block font-semibold text-slate-700 text-xs">Coordinates</label><button type="button" onclick="startMapPick()" class="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded hover:bg-amber-200 font-bold"><i class="fa-solid fa-map-pin"></i> Pick on Map</button></div>
+          
           <div class="grid grid-cols-2 gap-3"><input type="number" step="any" id="s-lat" required class="w-full border rounded p-2 text-xs" placeholder="Latitude"><input type="number" step="any" id="s-lon" required class="w-full border rounded p-2 text-xs" placeholder="Longitude"></div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="block font-semibold text-slate-700 mb-1">Type</label><select id="s-type" class="w-full border rounded-lg p-2 outline-none"><option value="Museum">Museum (Indoor)</option><option value="Cultural Site">Cultural Site (Outdoor)</option></select></div>
-          <div><label class="block font-semibold text-slate-700 mb-1">Primary Material</label><select id="s-material" class="w-full border rounded-lg p-2 outline-none"><option value="Paper">Paper / Manuscript</option><option value="Leather">Leather (Wayang)</option><option value="Textile">Textile</option><option value="Wood">Wood</option><option value="Stone">Stone (Temple)</option><option value="Metal">Metal / Keris</option></select></div>
+
+<div><label class="block font-semibold text-slate-700 mb-1">Type</label><select id="s-type" class="w-full border rounded-lg p-2 outline-none"><option value="Museum">Museum (Indoor)</option><option value="Cultural Site">Cultural Site (Outdoor)</option></select></div>
+        
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Materials Present <span class="text-[10px] font-normal text-slate-400">(Check all that apply)</span></label>
+          <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Paper" class="mat-chk w-3.5 h-3.5 text-amber-600"> Paper / Manuscript</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Leather" class="mat-chk w-3.5 h-3.5 text-amber-600"> Leather (Wayang)</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Textile" class="mat-chk w-3.5 h-3.5 text-amber-600"> Textile</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Painting" class="mat-chk w-3.5 h-3.5 text-amber-600"> Painting / Canvas</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Wood" class="mat-chk w-3.5 h-3.5 text-amber-600"> Wood</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Ceramic" class="mat-chk w-3.5 h-3.5 text-amber-600"> Ceramic / Glass</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Stone" class="mat-chk w-3.5 h-3.5 text-amber-600"> Stone (Temple)</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Brick" class="mat-chk w-3.5 h-3.5 text-amber-600"> Brick / Terracotta</label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded"><input type="checkbox" value="Metal" class="mat-chk w-3.5 h-3.5 text-amber-600"> Metal / Keris</label>
+          </div>
         </div>
+
         <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-lg mt-2">Save Location</button>
       </form>
     </div>
@@ -507,12 +522,14 @@ function loadSettings(){const s=localStorage.getItem('heritage_settings');if(s){
 
 /* ---------- DATA ---------- */
 function loadSampleData(){
-  db.sites=[
-    {id:"S_1",name:"Borobudur Temple",type:"Cultural Site",material:"Stone",lat:-7.6079,lon:110.2038,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:true,hasData:false},
-    {id:"S_2",name:"Prambanan Temple",type:"Cultural Site",material:"Stone",lat:-7.7520,lon:110.4915,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:false,hasData:false},
-    {id:"S_3",name:"Wayang Museum Jakarta",type:"Museum",material:"Leather",lat:-6.1352,lon:106.8133,capHvac:true,capDehum:true,capFire:true,capSop:true,capPower:true,hasData:false},
-    {id:"S_4",name:"National Museum Indonesia",type:"Museum",material:"Textile",lat:-6.1764,lon:106.8222,capHvac:true,capDehum:false,capFire:true,capSop:true,capPower:true,hasData:false}
+
+db.sites=[
+    {id:"S_1",name:"Borobudur Temple",type:"Cultural Site",material:["Stone"],lat:-7.6079,lon:110.2038,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:true,hasData:false},
+    {id:"S_2",name:"Prambanan Temple",type:"Cultural Site",material:["Stone"],lat:-7.7520,lon:110.4915,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:false,hasData:false},
+    {id:"S_3",name:"Wayang Museum Jakarta",type:"Museum",material:["Leather", "Wood"],lat:-6.1352,lon:106.8133,capHvac:true,capDehum:true,capFire:true,capSop:true,capPower:true,hasData:false},
+    {id:"S_4",name:"National Museum Indonesia",type:"Museum",material:["Textile", "Ceramic"],lat:-6.1764,lon:106.8222,capHvac:true,capDehum:false,capFire:true,capSop:true,capPower:true,hasData:false}
   ];
+
   saveDb();renderMapMarkers();
   closeModal('modal-settings'); 
   if(window.innerWidth<768) mobileView('map');
@@ -568,11 +585,17 @@ function renderMapMarkers(){
 
 function saveSite(e){
   e.preventDefault();
-  const s={id:"S_"+Date.now(),name:document.getElementById('s-name').value,lat:parseFloat(document.getElementById('s-lat').value),lon:parseFloat(document.getElementById('s-lon').value),type:document.getElementById('s-type').value,material:document.getElementById('s-material').value,capHvac:false,capDehum:false,capFire:false,capSop:false,capPower:false,hasData:false};
+  // Ambil semua checkbox yang dicentang dan ubah jadi Array
+  const checkedMats = Array.from(document.querySelectorAll('.mat-chk:checked')).map(cb => cb.value);
+  if(checkedMats.length === 0) checkedMats.push("Mixed"); // Jika lupa dicentang, anggap "Mixed"
+  
+  const s={id:"S_"+Date.now(),name:document.getElementById('s-name').value,lat:parseFloat(document.getElementById('s-lat').value),lon:parseFloat(document.getElementById('s-lon').value),type:document.getElementById('s-type').value,material:checkedMats,capHvac:false,capDehum:false,capFire:false,capSop:false,capPower:false,hasData:false};
+  
   db.sites.push(s);saveDb();closeModal('modal-add-site');document.getElementById('form-site').reset();renderMapMarkers();currentSiteId=s.id;
   if(window.innerWidth<768) mobileView('dash');
   processSiteData(s.id);
 }
+
 function saveCapacity(e){
   e.preventDefault();const s=db.sites.find(x=>x.id===currentSiteId);if(!s)return;
   s.capHvac=document.getElementById('cap-hvac').checked;s.capDehum=document.getElementById('cap-dehum').checked;s.capFire=document.getElementById('cap-fire').checked;s.capSop=document.getElementById('cap-sop').checked;s.capPower=document.getElementById('cap-power').checked;
@@ -687,13 +710,27 @@ function calculateRisk(s,w,aq,eq,fl){
   if(s.firePoints>0){H+=2;hz.push(['Fire hotspots nearby','crit',s.firePoints+' FIRMS detections']);}
   s.hazardList=hz; s.hazardScore=Math.min(H,12);
 
-  // ---------- VULNERABILITY (1-5) ----------
-  let V=2; const vu=[];
-  const matMap={Paper:5,Leather:5,Textile:4,Wood:4,Metal:3,Stone:2};
-  V=matMap[s.material]||3;
-  vu.push([s.material+' material','base','Intrinsic fragility '+V+'/5']);
-  if(s.type==='Cultural Site'){vu.push(['Outdoor exposure','warn','Directly exposed to weather']); if(s.apiRain>0){V+=1;vu.push(['Active precipitation on surface','warn','Acid rain / erosion']);}}
-  if((s.material==='Wood'||s.material==='Paper'||s.material==='Textile')&&RH>60&&T>20){vu.push(['Biological susceptibility','warn','Organic material in warm/humid air']);}
+// ---------- VULNERABILITY (1-5) ----------
+  let V=1; const vu=[];
+  // Pastikan format array (agar aman jika me-load data lama yang masih format string)
+  const mats = Array.isArray(s.material) ? s.material : [s.material || 'Mixed'];
+  const matMap={Paper:5,Leather:5,Textile:4,Painting:5,Wood:4,Metal:3,Brick:3,Stone:2,Ceramic:2};
+  
+  // Sistem mencari nilai kerentanan TERTINGGI dari semua material yang dipilih
+  mats.forEach(m => { V = Math.max(V, matMap[m] || 3); });
+
+  const matLabel = mats.length > 2 ? mats.length + ' mixed materials' : mats.join(' & ');
+  vu.push([matLabel, 'base', 'Highest intrinsic fragility '+V+'/5']);
+
+  if(s.type==='Cultural Site'){
+      vu.push(['Outdoor exposure','warn','Directly exposed to weather']); 
+      if(s.apiRain>0){V+=1;vu.push(['Active precipitation on surface','warn','Acid rain / erosion']);}
+  }
+  
+  // Jika ada salah satu bahan organik, langsung nyalakan peringatan biologi (jamur/rayap)
+  if(mats.some(m => ['Wood','Paper','Textile','Painting','Leather'].includes(m)) && RH>60 && T>20){
+      vu.push(['Biological susceptibility','warn','Organic materials in warm/humid air']);
+  }
   s.vulnList=vu; s.vulnScore=Math.min(V,5);
 
   // ---------- CAPACITY (1-6) ----------
@@ -757,15 +794,19 @@ function moldIndex(RH,T){
 /* ---------- ACTIONS ---------- */
 function generateActions(s) {
   const acts = [];
-  const RH = s.apiRH, T = s.apiTemp, M = s.material;
-  const isMuseum = s.type === 'Museum';
+
+  const RH = s.apiRH, T = s.apiTemp;
+    const isMuseum = s.type === 'Museum';
+    const mats = Array.isArray(s.material) ? s.material : [s.material || 'Mixed'];
+    // Helper khusus untuk mengecek apakah material ada di dalam list koleksi
+    const hasMat = (arr) => mats.some(m => arr.includes(m));
 
   // HIGH HUMIDITY
-  if (RH > 75 || (RH > 65 && ['Paper','Leather','Textile','Wood'].includes(M))) {
+  if (RH > 75 || (RH > 65 && hasMat(['Paper','Leather','Textile','Wood','Painting']))) {
     if (s.capDehum) {
       acts.push(['fa-power-off', 'high', `<b>HOW TO REDUCE MOISTURE:</b><br>• Turn on ALL dehumidifier units in the room immediately — do not wait. Even a 30-minute delay at high humidity can begin warping wood or softening paper fibers.<br>• Set the target humidity dial to 50–55% RH. This is the internationally recommended safe zone for most heritage materials (ASHRAE 55 standard).<br>• Seal every door, window, and air gap with draught tape or rolled towels. Any breach allows warm, humid outside air to enter and overwhelm the dehumidifier's capacity.<br>• Check the dehumidifier's water collection tank every 2–3 hours and empty it before it reaches full capacity, as a full tank causes the unit to shut off automatically.<br>• Log the current RH reading and timestamp in the environment monitoring logbook for the conservation record.`]);
     } else {
-      acts.push(['fa-triangle-exclamation', 'high', `<b>HOW TO PROTECT ${M.toUpperCase()} WITHOUT A DEHUMIDIFIER:</b><br>• Place activated silica gel packets (blue indicating type preferred) directly inside every display case and storage box. Use at least 200g of silica gel per 1 cubic meter of enclosed space.<br>• Check that all display case gaskets and door seals are fully intact — press a thin piece of paper against the seal; if it slides out easily, the seal is compromised and must be taped immediately.<br>• Keep all main room doors and windows shut. Post a sign asking staff to enter and exit swiftly and to never prop doors open.<br>• If silica gel packets have turned pink or clear, they are fully saturated and must be replaced or regenerated by oven-drying at 120°C for 1–2 hours before reuse.<br>• As a temporary measure, spread thin cotton cloths or acid-free tissue paper between stacked textiles or papers to absorb contact moisture and allow air circulation between layers.<br>• Monitor and log RH readings every 2 hours until conditions stabilize below 65% RH.`]);
+      acts.push(['fa-triangle-exclamation', 'high', `<b>HOW TO PROTECT SENSITIVE MATERIALS WITHOUT A DEHUMIDIFIER:</b><br>• Place activated silica gel packets (blue indicating type preferred) directly inside every display case and storage box. Use at least 200g of silica gel per 1 cubic meter of enclosed space.<br>• Check that all display case gaskets and door seals are fully intact — press a thin piece of paper against the seal; if it slides out easily, the seal is compromised and must be taped immediately.<br>• Keep all main room doors and windows shut. Post a sign asking staff to enter and exit swiftly and to never prop doors open.<br>• If silica gel packets have turned pink or clear, they are fully saturated and must be replaced or regenerated by oven-drying at 120°C for 1–2 hours before reuse.<br>• As a temporary measure, spread thin cotton cloths or acid-free tissue paper between stacked textiles or papers to absorb contact moisture and allow air circulation between layers.<br>• Monitor and log RH readings every 2 hours until conditions stabilize below 65% RH.`]);
     }
     if (isMuseum) acts.push(['fa-door-closed', 'med', `<b>HOW TO MANAGE VISITOR NUMBERS DURING HIGH HUMIDITY:</b><br>• Immediately restrict gallery entry to a maximum of 10–15 visitors per zone. Each adult exhales approximately 40g of water vapour per hour, rapidly raising RH inside enclosed spaces.<br>• Brief your front-desk staff to actively manage the queue — visitors must wait in the open-air foyer or lobby, not inside the gallery.<br>• Assign a staff member to stand at the gallery door: open it only momentarily for entry and exit, then close it firmly. Do not allow the door to be held open for extended periods.<br>• Display a polite notice at the entrance explaining that crowd limits are in place to protect the collection — most visitors will understand and cooperate.<br>• Consider temporarily closing the most humidity-sensitive gallery rooms (e.g., those with paper manuscripts or historical textiles) until RH drops below 65%.`]);
   }
@@ -776,7 +817,7 @@ function generateActions(s) {
   }
 
   // PESTS & INSECTS
-  if ((T >= 20 && T <= 32 && RH > 60) && ['Wood','Paper','Textile'].includes(M)) {
+  if ((T >= 20 && T <= 32 && RH > 60) && hasMat(['Wood','Paper','Textile','Painting'])) {
     acts.push(['fa-bug', 'med', `<b>HOW TO CHECK FOR AND PREVENT PEST INFESTATION:</b><br>• Conduct a structured Integrated Pest Management (IPM) inspection today. Current temperature and humidity conditions are optimal for woodborers, silverfish, and textile moths to breed and feed.<br>• Using a flashlight, methodically examine the underside of shelves, the dark rear corners of display cabinets, and the folds of stored textiles. Pay special attention to joints and cracks in wooden frames where insects like to nest.<br>• Identify the specific pest signs for your material:<br>&nbsp;&nbsp;— <i>Wood:</i> Look for fine, powdery "frass" (wood dust) below the object, or tiny round exit holes (1–2mm diameter) indicating active woodborers.<br>&nbsp;&nbsp;— <i>Paper:</i> Look for irregular surface grazing, tiny droppings resembling black pepper, or shed insect skins (silverfish).<br>&nbsp;&nbsp;— <i>Textile:</i> Look for irregular holes in fabric, larval casings (small cream-coloured tubes), or moth wings near folds.<br>• Place commercial sticky insect traps at the base of every storage cabinet and in each room corner. Mark the date on each trap and inspect them every 72 hours. Record catch counts — a sudden spike in numbers signals an active infestation.<br>• If live insects or larvae are confirmed, isolate the object in a sealed plastic bag and freeze it at -20°C for 72 hours (anoxic treatment) — this kills insects at all life stages without chemicals. Then move the object to quarantine.<br>• Remove all food, drinks, and organic waste from the collection areas immediately, as these are primary attractants.`]);
   }
 
@@ -801,8 +842,9 @@ function generateActions(s) {
 
   // EARTHQUAKE
   if (s.maxEQ >= 4.5) {
-    acts.push(['fa-helmet-safety', 'high', `<b>POST-EARTHQUAKE SAFETY AND COLLECTION PROCEDURE:</b><br>• Your first and non-negotiable priority is human safety. Immediately but calmly guide all visitors and staff out of the building using the nearest safe exit — speak clearly and walk with visitors, do not run or create panic. Do not use elevators.<br>• Once all persons are evacuated and accounted for at the designated muster point, assign a trained staff member with a hard hat and flashlight to conduct a rapid structural inspection before anyone re-enters. Look for: new cracks in load-bearing walls or pillars, broken glass, hanging ceiling sections, and displaced structural beams. Do not re-enter if any of these are observed — contact your structural safety authority first.<br>• If the building is confirmed structurally safe, re-enter to assess collection damage. Begin with a visual check from the doorway of each room — identify any objects that have fallen, shifted, or are visibly unstable before approaching.<br>• Do NOT attempt to straighten or reposition tilting objects without proper support equipment. A leaning artifact may be balanced precariously and can fall and shatter if touched without correct support in place.<br>• Photograph all damage systematically before any object is moved — this is mandatory for insurance claims and conservation documentation.<br>• Check that all display case restraint systems (museum wax, brackets, foam supports) are still effective. Re-apply museum wax to any objects that have shifted on their mounts.<br>• Issue a precautionary notice to visitors that the facility is temporarily closed pending post-earthquake safety assessment.`]);
-  }
+    if (hasMat(['Ceramic'])) {
+    acts.push(['fa-house-crack', 'high', `<b>CERAMIC / GLASS FRAGILITY ALERT:</b><br>• Do not walk closely to display cases containing ceramics or glass. Aftershocks can cause shattered shards to burst outward. Check mountings and museum wax stability immediately.`]);
+  }}
 
   // FIRE
   if (s.firePoints > 0) {
@@ -810,7 +852,7 @@ function generateActions(s) {
   }
   
   // MOSS (STONE ONLY)
-  if (s.type === 'Cultural Site' && ['Stone'].includes(M) && s.maxPrecip > 20) {
+  if (s.type === 'Cultural Site' && hasMat(['Stone','Brick']) && s.maxPrecip > 20) {
     acts.push(['fa-broom', 'low', `<b>HOW TO PREVENT AND MANAGE MOSS AND ALGAE GROWTH:</b><br>• Conduct a targeted inspection of the north-facing, permanently shaded, and low-lying sections of all stone structures — these are where biological growth (moss, algae, lichen, and biofilm) establishes first due to persistent moisture and low light, which inhibit natural drying.<br>• Clearly distinguish between growth types before taking any action:<br>&nbsp;&nbsp;— <i>Green algae/biofilm:</i> Thin, slimy green coating, earliest stage — easiest to remove.<br>&nbsp;&nbsp;— <i>Moss:</i> Thick, fibrous green cushions — their root-like rhizoids penetrate stone joints and accelerate weathering.<br>&nbsp;&nbsp;— <i>Lichen:</i> Grey, orange, or black crusty patches bonded chemically to stone — requires specialist removal and must NOT be scraped with hard tools as it damages the stone surface beneath.<br>• For algae and moss (not lichen), use a natural-fibre brush (not wire or nylon) with a gentle circular motion on dry stone. Work from the top downward to prevent recontamination of cleaned areas.<br>• Do not use household bleach or acidic cleaners — these kill surface growth but leave chemical residues in the stone pores that damage the mineral structure and can cause long-term discolouration.<br>• After mechanical removal, allow the stone to dry fully, then apply a professional biocide product approved for heritage stone (e.g., Preventol or Biotin R) by brush or low-pressure spray to inhibit re-growth for 6–12 months.<br>• Ensure surface drainage channels around the monument base are clear so rainwater drains away rather than pooling at the stone — standing water at the base is the primary driver of biological colonisation.<br>• Photograph the extent of biological growth before and after treatment and add to the monument's condition monitoring record.`]);
   }
 
@@ -874,7 +916,9 @@ function renderDashboard(s){
   document.getElementById('dashboard-content').classList.remove('hidden');
   document.getElementById('d-name').innerText=s.name;
   document.getElementById('d-type').innerText=s.type;
-  document.getElementById('d-material').innerText=s.material;
+  const matDisplay = Array.isArray(s.material) ? s.material.join(', ') : s.material;
+  // Jika namanya terlalu panjang, kita potong agar UI tetap rapi
+  document.getElementById('d-material').innerText = matDisplay.length > 35 ? matDisplay.substring(0, 32) + '...' : matDisplay;
   document.getElementById('d-coord').innerText=s.lat.toFixed(3)+', '+s.lon.toFixed(3);
   populateCapacityForm(s);
 
@@ -937,21 +981,21 @@ function renderAlert(s) {
     box.className = "mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm flex gap-3 items-start";
     box.innerHTML = `<div class="bg-rose-100 text-rose-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
       <div><h3 class="font-bold text-rose-800 text-sm mb-0.5">CRITICAL ALERT — Immediate Action Required!</h3>
-      <p class="text-xs text-rose-700 leading-relaxed">Current weather conditions pose a <b>severe and active threat</b> to your <b>${s.material}</b> collection, with a calculated damage risk of <b>${s.riskScore}%</b>. At this level, irreversible deterioration — warping, mold outbreak, structural failure, or permanent staining — can begin within hours if no action is taken. Do not delay. Open the <b>Actions</b> tab immediately and work through the step-by-step emergency response instructions from the top, prioritising any items marked <b>HIGH</b> first.</p></div>`;
+      <p class="text-xs text-rose-700 leading-relaxed">Current weather conditions pose a <b>severe and active threat</b> to your <b>${Array.isArray(s.material) ? s.material.join(', ') : s.material}</b> collection, with a calculated damage risk of <b>${s.riskScore}%</b>. At this level, irreversible deterioration — warping, mold outbreak, structural failure, or permanent staining — can begin within hours if no action is taken. Do not delay. Open the <b>Actions</b> tab immediately and work through the step-by-step emergency response instructions from the top, prioritising any items marked <b>HIGH</b> first.</p></div>`;
   
   // If risk score is medium OR if there is any URGENT action required despite a low score
   } else if (s.riskLevel === 'MEDIUM' || s.actions.some(a => a[1] === 'high')) {
     box.className = "mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm flex gap-3 items-start";
     box.innerHTML = `<div class="bg-amber-100 text-amber-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-circle-exclamation text-lg"></i></div>
       <div><h3 class="font-bold text-amber-800 text-sm mb-0.5">ELEVATED RISK — Preventive Steps Needed</h3>
-      <p class="text-xs text-amber-700 leading-relaxed">One or more environmental factors — such as rising humidity, UV exposure, or nearby pest conditions — are currently <b>outside the safe threshold</b> for <b>${s.material}</b> items. While damage is not yet occurring, conditions are deteriorating and require <b>prompt preventive action today</b>. Delaying response at this stage is the most common cause of collections reaching a critical state. Review the targeted "How-To" guides in the <b>Actions</b> tab and complete the recommended steps before conditions worsen.</p></div>`;
+      <p class="text-xs text-amber-700 leading-relaxed">One or more environmental factors — such as rising humidity, UV exposure, or nearby pest conditions — are currently <b>outside the safe threshold</b> for <b>${Array.isArray(s.material) ? s.material.join(', ') : s.material}</b> items. While damage is not yet occurring, conditions are deteriorating and require <b>prompt preventive action today</b>. Delaying response at this stage is the most common cause of collections reaching a critical state. Review the targeted "How-To" guides in the <b>Actions</b> tab and complete the recommended steps before conditions worsen.</p></div>`;
   
   // Truly safe condition
   } else {
     box.className = "mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex gap-3 items-start";
     box.innerHTML = `<div class="bg-emerald-100 text-emerald-600 rounded-full p-2 shrink-0"><i class="fa-solid fa-check-double text-lg"></i></div>
       <div><h3 class="font-bold text-emerald-800 text-sm mb-0.5">SAFE — Conditions Stable</h3>
-      <p class="text-xs text-emerald-700 leading-relaxed">All monitored environmental parameters — temperature, humidity, UV, and air quality — are currently <b>within the safe conservation range</b> for your <b>${s.material}</b> collection. This is the right moment to carry out proactive routine maintenance: regular upkeep done during stable conditions is what prevents emergencies from developing. Open the <b>Actions</b> tab for today's recommended daily checklist, including housekeeping, equipment checks, and collection condition monitoring.</p></div>`;
+      <p class="text-xs text-emerald-700 leading-relaxed">All monitored environmental parameters — temperature, humidity, UV, and air quality — are currently <b>within the safe conservation range</b> for your <b>${Array.isArray(s.material) ? s.material.join(', ') : s.material}</b> collection. This is the right moment to carry out proactive routine maintenance: regular upkeep done during stable conditions is what prevents emergencies from developing. Open the <b>Actions</b> tab for today's recommended daily checklist, including housekeeping, equipment checks, and collection condition monitoring.</p></div>`;
   }
 }
 
