@@ -160,12 +160,23 @@
       }
     }
 
+    /* --- FIX IOS BOTTOM NAV BUG --- */
+    html, body {
+      height: 100vh; /* Fallback untuk browser lama */
+      height: 100dvh; /* Dynamic Viewport untuk HP modern */
+    }
+    @supports (-webkit-touch-callout: none) {
+      /* Hack khusus hanya untuk iOS / iPhone */
+      body {
+        height: -webkit-fill-available;
+      }
+    }
 
   </style>
 
 </head>
 
-<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="text-slate-800 flex flex-col overflow-hidden">
 
 <!-- NAVBAR -->
 <nav class="bg-slate-900 text-white px-3 py-2.5 shrink-0 flex justify-between items-center shadow-lg z-30 border-b border-amber-600/30">
@@ -354,7 +365,7 @@
 </div>
 
 <!-- MOBILE BOTTOM NAV -->
-<div class="md:hidden bg-white border-t border-slate-200 shrink-0 flex z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
+<div class="md:hidden bg-white border-t border-slate-200 shrink-0 flex z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)]">
   <button id="mtab-map" onclick="mobileView('map')" class="mtab-active flex-1 py-2.5 flex flex-col items-center text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-map text-base mb-0.5"></i>Map</button>
   <button id="mtab-dash" onclick="mobileView('dash')" class="flex-1 py-2.5 flex flex-col items-center text-[10px] font-semibold text-slate-500"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Analysis</button>
 </div>
