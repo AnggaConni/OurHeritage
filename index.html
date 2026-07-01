@@ -559,14 +559,66 @@ async function loadSettings(){
 /* ---------- DATA ---------- */
 function loadSampleData(){
 
-db.sites=[
-    {id:"S_1",name:"Borobudur Temple",type:"Cultural Site",material:["Stone"],lat:-7.6079,lon:110.2038,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:true,hasData:false},
-    {id:"S_2",name:"Prambanan Temple",type:"Cultural Site",material:["Stone"],lat:-7.7520,lon:110.4915,capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:false,hasData:false},
-    {id:"S_3",name:"Wayang Museum Jakarta",type:"Museum",material:["Leather", "Wood"],lat:-6.1352,lon:106.8133,capHvac:true,capDehum:true,capFire:true,capSop:true,capPower:true,hasData:false},
-    {id:"S_4",name:"National Museum Indonesia",type:"Museum",material:["Textile", "Ceramic"],lat:-6.1764,lon:106.8222,capHvac:true,capDehum:false,capFire:true,capSop:true,capPower:true,hasData:false}
+  // Programmatic generator for 2 years (730 days) of historical events
+  const generateHistory = (type) => {
+    const history = [];
+    const now = new Date();
+    
+    // Contextual hazards based on site type
+    const hazards = type === "Museum" 
+        ? ["High humidity", "Air pollution / dust", "Elevated humidity", "High UV / heat"]
+        : ["Heavy rainfall", "Seismic activity", "Flood threat", "Fire hotspots nearby"];
+    
+    // Inject ~20 randomized MEDIUM/HIGH events across the 2-year timeline
+    for(let i = 0; i < 20; i++) {
+      const daysAgo = Math.floor(Math.random() * 730) + 1;
+      const eventDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+      
+      const isHighRisk = Math.random() > 0.6; // 40% chance of HIGH risk
+      const hazardType = hazards[Math.floor(Math.random() * hazards.length)];
+      
+      history.push({
+        date: eventDate.toLocaleDateString('en-CA'), // YYYY-MM-DD format
+        time: eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        riskScore: isHighRisk ? Math.floor(Math.random() * 26) + 75 : Math.floor(Math.random() * 35) + 40,
+        riskLevel: isHighRisk ? 'HIGH' : 'MEDIUM',
+        hazard: hazardType
+      });
+    }
+    
+    // Sort chronologically descending (newest at the top)
+    return history.sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  db.sites=[
+    {
+      id:"S_1",name:"Borobudur Temple",type:"Cultural Site",material:["Stone"],lat:-7.6079,lon:110.2038,
+      capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:true,hasData:false,
+      history: generateHistory("Cultural Site")
+    },
+    {
+      id:"S_2",name:"Prambanan Temple",type:"Cultural Site",material:["Stone"],lat:-7.7520,lon:110.4915,
+      capHvac:false,capDehum:false,capFire:false,capSop:true,capPower:false,hasData:false,
+      history: generateHistory("Cultural Site")
+    },
+    {
+      id:"S_3",name:"Wayang Museum Jakarta",type:"Museum",material:["Leather", "Wood"],lat:-6.1352,lon:106.8133,
+      capHvac:true,capDehum:true,capFire:true,capSop:true,capPower:true,hasData:false,
+      history: generateHistory("Museum")
+    },
+    {
+      id:"S_4",name:"National Museum Indonesia",type:"Museum",material:["Textile", "Ceramic"],lat:-6.1764,lon:106.8222,
+      capHvac:true,capDehum:false,capFire:true,capSop:true,capPower:true,hasData:false,
+      history: generateHistory("Museum")
+    }
   ];
 
-  saveDb();renderMapMarkers();
+  saveDb();
+  renderMapMarkers();
+  
+  // TAMBAHAN: Berikan notifikasi sukses agar user tidak kebingungan
+  alert("Sample data (termasuk 2 tahun history) berhasil dimuat!");
+  
   closeModal('modal-settings'); 
   if(window.innerWidth<768) mobileView('map');
 }
