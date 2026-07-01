@@ -76,6 +76,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
 
   <style>
@@ -262,6 +263,7 @@
           <button data-tab="destana" onclick="switchTab('destana')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">DESTANA</button>
           <button data-tab="forecast" onclick="switchTab('forecast')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">Forecast</button>
           <button data-tab="actions" onclick="switchTab('actions')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">Actions</button>
+          <button data-tab="history" onclick="switchTab('history')" class="dtab text-slate-500 border-transparent px-3 py-2.5 border-b-2 whitespace-nowrap">History</button>
         </div>
       </div>
 
@@ -359,6 +361,16 @@
           </div>
           <div id="actions-list" class="space-y-3"></div>
         </div>
+
+        <!-- HISTORY -->
+        <div id="tab-history" class="tabpane hidden fade-in">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4">
+            <h3 class="text-sm font-bold text-slate-800 mb-1"><i class="fa-solid fa-clock-rotate-left mr-1 text-amber-600"></i> Event History</h3>
+            <p class="text-[11px] text-slate-500">Automatically records MEDIUM/HIGH risk condition history every time the app is opened. Stores a maximum of the last 5 years.</p>
+          </div>
+          <div id="history-list" class="space-y-3"></div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -528,8 +540,21 @@ function switchTab(t){
 }
 
 /* ---------- SETTINGS ---------- */
-function saveSettings(){settings.firms=document.getElementById('set-firms').value.trim();settings.openaq=document.getElementById('set-openaq').value.trim();localStorage.setItem('heritage_settings',JSON.stringify(settings));closeModal('modal-settings');}
-function loadSettings(){const s=localStorage.getItem('heritage_settings');if(s){settings=JSON.parse(s);document.getElementById('set-firms').value=settings.firms||'';document.getElementById('set-openaq').value=settings.openaq||'';}}
+async function saveSettings(){
+  settings.firms = document.getElementById('set-firms').value.trim();
+  settings.openaq = document.getElementById('set-openaq').value.trim();
+  await localforage.setItem('heritage_settings', settings);
+  closeModal('modal-settings');
+}
+async function loadSettings(){
+  let s = await localforage.getItem('heritage_settings');
+  // Fallback migrasi jika pakai localStorage sebelumnya
+  if(!s && localStorage.getItem('heritage_settings')){ 
+    s = JSON.parse(localStorage.getItem('heritage_settings')); 
+    await localforage.setItem('heritage_settings', s);
+  }
+  if(s){ settings = s; document.getElementById('set-firms').value = settings.firms||''; document.getElementById('set-openaq').value = settings.openaq||''; }
+}
 
 /* ---------- DATA ---------- */
 function loadSampleData(){
@@ -545,8 +570,20 @@ db.sites=[
   closeModal('modal-settings'); 
   if(window.innerWidth<768) mobileView('map');
 }
-function saveDb(){localStorage.setItem('heritage_db',JSON.stringify(db));}
-function loadDb(){const d=localStorage.getItem('heritage_db');if(d){db=JSON.parse(d);renderMapMarkers();}}
+
+async function saveDb(){ 
+  await localforage.setItem('heritage_db', db); 
+}
+
+async function loadDb(){
+  let d = await localforage.getItem('heritage_db');
+  // Fallback migrasi dari localStorage ke IndexedDB agar data lama Anda aman
+  if(!d && localStorage.getItem('heritage_db')){
+    d = JSON.parse(localStorage.getItem('heritage_db'));
+    await localforage.setItem('heritage_db', d);
+  }
+  if(d){ db = d; renderMapMarkers(); }
+}
 
 function renderMapMarkers(){
   for(let id in markers) map.removeLayer(markers[id]); markers={};
@@ -703,7 +740,7 @@ function calculateRisk(s,w,aq,eq,fl){
   s.maxPrecip=Math.max(...s.chartPrecip); s.diurnal=(s.chartTmax[0]-s.chartTmin[0]);
 
   // ---------- HAZARD (0-12) ----------
-  let H=0; const hz=[];
+  let H = 1; const hz=[];
   const RH=s.apiRH, T=s.apiTemp;
   if(RH>80){H+=4;hz.push(['High humidity','crit','RH '+RH+'% — mold/corrosion driver']);}
   else if(RH>65){H+=2;hz.push(['Elevated humidity','warn','RH '+RH+'%']);}
@@ -872,6 +909,41 @@ function generateActions(s) {
     acts.push(['fa-circle-check', 'ok', `<b>CONDITIONS STABLE — ROUTINE MAINTENANCE CHECKLIST:</b><br>• Environmental conditions are currently within safe parameters for the collection. Use this opportunity to carry out proactive routine tasks that protect the collection long-term.<br>• <i>Morning walkthrough:</i> Inspect all galleries and storage rooms visually for any signs of overnight changes — drips from ceiling, insects on sticky traps, shifted objects, unusual odours (mold has a characteristic musty smell detectable before visible growth appears).<br>• <i>Condition monitoring:</i> Record the current temperature, RH, and light levels in the environmental logbook. Consistent record-keeping is the foundation of preventive conservation — it allows you to identify trends before they become problems.<br>• <i>Housekeeping:</i> Dust accessible surfaces using a soft microfibre cloth or a conservation-approved HEPA vacuum with a soft brush attachment. Work systematically room by room. Never use aerosol sprays or furniture polish near artifacts.<br>• <i>Equipment check:</i> Verify that all dehumidifiers, air purifiers, and data loggers are operational, reading correctly, and that collection tanks/filters are not due for emptying or replacement.<br>• <i>Collection survey:</i> Conduct a routine visual check of each object on display — look for any new damage, surface changes, or altered appearance. Document and photograph anything of concern.<br>• <i>Visitor readiness:</i> Confirm that all emergency exits, fire extinguishers, and first-aid kits are accessible and in good condition before opening to visitors.`]);
   }
 
+  // --- HISTORY LOGGER (Maks 5 Tahun / 1825 hari) ---
+  if (!s.history) s.history = [];
+  
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
+  const existingLogIndex = s.history.findIndex(h => h.date === todayStr);
+
+  // Hanya catat jika ada peringatan (MEDIUM atau HIGH)
+  if (s.riskLevel === 'HIGH' || s.riskLevel === 'MEDIUM') {
+    const logEntry = {
+      date: todayStr,
+      time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      riskScore: s.riskScore,
+      riskLevel: s.riskLevel,
+      // Ambil bahaya paling atas dari list
+      hazard: s.hazardList.length > 0 ? s.hazardList[0][0] : 'Elevated Risk' 
+    };
+
+    if (existingLogIndex >= 0) {
+      // Jika di hari yang sama nilainya makin parah (terburuk), update datanya
+      if (s.riskScore > s.history[existingLogIndex].riskScore) {
+        s.history[existingLogIndex] = logEntry;
+      }
+    } else {
+      // Masukkan ke urutan paling atas
+      s.history.unshift(logEntry);
+    }
+
+    // Keamanan: Batasi history maksimal 1825 data (5 Tahun) agar HP tidak lemot
+    if (s.history.length > 1825) {
+      s.history.pop(); // Hapus data paling ujung bawah (paling lama)
+    }
+  }
+  // -------------------------------------------------
+
   s.actions = acts;
 }
 
@@ -968,6 +1040,8 @@ function renderDashboard(s){
 
   // destana
   renderDestana(s);
+  // history
+  renderHistory(s);
   // forecast
   renderForecast(s);
   // actions
@@ -1018,6 +1092,31 @@ function renderDestana(s){
   document.getElementById('cp-score').innerText=s.capScoreRaw+'/6';
   document.getElementById('destana-eq').innerHTML=`<div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Risk Equation</div>
     <div class="text-sm font-semibold">Risk = (Hazard ${s.hazardScore} × Vulnerability ${s.vulnScore}) ÷ Capacity ${s.capScore.toFixed(1)} → <span class="${s.riskLevel==='HIGH'?'text-rose-400':s.riskLevel==='MEDIUM'?'text-amber-400':'text-emerald-400'}">${s.riskScore}% ${s.riskLevel}</span></div>`;
+}
+
+function renderHistory(s) {
+  const hl = document.getElementById('history-list');
+  hl.innerHTML = '';
+  
+  if (!s.history || s.history.length === 0) {
+    hl.innerHTML = '<div class="text-center p-6 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-slate-400 text-xs">There has been no history of high risk (Medium/High) recorded so far.</div>';
+    return;
+  }
+  
+  s.history.forEach(h => {
+    const badge = h.riskLevel === 'HIGH' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-amber-100 text-amber-700 border-amber-200';
+    hl.innerHTML += `
+      <div class="bg-white rounded-lg border border-slate-200 p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm page-break-inside: avoid;">
+        <div>
+          <div class="text-[10px] text-slate-400 font-bold mb-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${h.date} · ${h.time}</div>
+          <div class="text-xs font-semibold text-slate-700">${h.hazard}</div>
+        </div>
+        <div class="px-2.5 py-1 rounded border text-[10px] font-bold shrink-0 ${badge}">
+          ${h.riskScore}% ${h.riskLevel}
+        </div>
+      </div>
+    `;
+  });
 }
 
 function renderForecast(s){
